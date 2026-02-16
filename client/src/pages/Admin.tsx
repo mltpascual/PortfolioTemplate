@@ -30,6 +30,7 @@ import {
   BarChart3,
   MousePointerClick,
   Eye,
+  EyeOff,
   TrendingUp,
   LogOut,
   ChevronDown,
@@ -1911,6 +1912,7 @@ function LayoutTab() {
   const [sectionOrder, setSectionOrder] = useState<string[]>(
     DEFAULT_SECTION_ORDER.split(",")
   );
+  const [hiddenSections, setHiddenSections] = useState<Set<string>>(new Set());
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
@@ -1918,6 +1920,8 @@ function LayoutTab() {
       setLayoutMode((theme.layoutMode as "separate" | "combined") || "separate");
       const order = theme.sectionOrder || DEFAULT_SECTION_ORDER;
       setSectionOrder(order.split(",").map((s: string) => s.trim()).filter(Boolean));
+      const hidden = theme.hiddenSections ? new Set(theme.hiddenSections.split(",").map((s: string) => s.trim()).filter(Boolean)) : new Set<string>();
+      setHiddenSections(hidden);
       setInitialized(true);
     }
   }, [theme, initialized]);
@@ -1968,21 +1972,36 @@ function LayoutTab() {
     }
   };
 
+  const toggleVisibility = (sectionId: string) => {
+    setHiddenSections((prev) => {
+      const next = new Set(prev);
+      if (next.has(sectionId)) {
+        next.delete(sectionId);
+      } else {
+        next.add(sectionId);
+      }
+      return next;
+    });
+  };
+
   const handleSave = () => {
     updateMutation.mutate({
       layoutMode,
       sectionOrder: sectionOrder.join(","),
+      hiddenSections: Array.from(hiddenSections).join(","),
     });
   };
 
   const handleReset = () => {
     setLayoutMode("separate");
     setSectionOrder(DEFAULT_SECTION_ORDER.split(","));
+    setHiddenSections(new Set());
   };
 
   const isDefault =
     layoutMode === "separate" &&
-    sectionOrder.join(",") === DEFAULT_SECTION_ORDER;
+    sectionOrder.join(",") === DEFAULT_SECTION_ORDER &&
+    hiddenSections.size === 0;
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -2075,6 +2094,66 @@ function LayoutTab() {
               <div className="h-2 rounded-full bg-warm-200 w-full" />
             </div>
           </button>
+        </div>
+      </div>
+
+      {/* Section Visibility */}
+      <div className="warm-card p-6 md:p-8">
+        <h3 className="text-xl text-charcoal mb-2" style={{ fontFamily: "var(--font-display)" }}>
+          Section Visibility
+        </h3>
+        <p className="text-sm text-charcoal-light mb-6" style={{ fontFamily: "var(--font-body)" }}>
+          Toggle sections on or off. Hidden sections won't appear on your portfolio page.
+        </p>
+        <div className="space-y-2">
+          {sectionOrder.filter(s => s !== 'hero').map((sectionId) => {
+            const meta = SECTION_LABELS[sectionId] || { label: sectionId, icon: LayoutGrid };
+            const Icon = meta.icon;
+            const isHidden = hiddenSections.has(sectionId);
+            if (isCombined && COMBINED_GROUP_IDS.has(sectionId) && sectionId !== combinedGroupItems[0]) return null;
+            const displayLabel = isCombined && sectionId === combinedGroupItems[0]
+              ? `Combined (${combinedGroupItems.map(s => SECTION_LABELS[s]?.label || s).join(', ')})`
+              : meta.label;
+            const isGroupHidden = isCombined && sectionId === combinedGroupItems[0]
+              ? combinedGroupItems.every(s => hiddenSections.has(s))
+              : isHidden;
+            return (
+              <button
+                key={sectionId}
+                onClick={() => {
+                  if (isCombined && sectionId === combinedGroupItems[0]) {
+                    const allHidden = combinedGroupItems.every(s => hiddenSections.has(s));
+                    setHiddenSections(prev => {
+                      const next = new Set(prev);
+                      combinedGroupItems.forEach(s => allHidden ? next.delete(s) : next.add(s));
+                      return next;
+                    });
+                  } else {
+                    toggleVisibility(sectionId);
+                  }
+                }}
+                className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                  isGroupHidden
+                    ? 'border-warm-200/40 bg-warm-50/50 opacity-50'
+                    : 'border-warm-200/60 bg-white hover:border-warm-300'
+                }`}
+              >
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  isGroupHidden ? 'bg-warm-100' : 'bg-terracotta/10'
+                }`}>
+                  <Icon className={`w-4 h-4 ${isGroupHidden ? 'text-charcoal-light' : 'text-terracotta'}`} />
+                </div>
+                <span className="flex-1 text-left text-sm font-medium text-charcoal" style={{ fontFamily: "var(--font-body)" }}>
+                  {displayLabel}
+                </span>
+                {isGroupHidden ? (
+                  <EyeOff className="w-4 h-4 text-charcoal-light" />
+                ) : (
+                  <Eye className="w-4 h-4 text-terracotta" />
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 

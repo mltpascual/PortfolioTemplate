@@ -5,9 +5,10 @@
  * Layout-mode aware: in combined mode, Skills/Experience/Education links
  * scroll to the combined section and activate the correct pill tab.
  * Nav link order follows the sectionOrder from theme settings.
+ * Scroll-spy: highlights the active section link as you scroll.
  */
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Menu, X, Settings, FileText } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useThemeSettings, DEFAULT_THEME } from "@/hooks/useThemeSettings";
@@ -30,24 +31,21 @@ const DEFAULT_SECTION_ORDER = "hero,about,projects,skills,experience,education,c
 
 interface NavbarProps {
   profile: PortfolioData["profile"];
+  hiddenSections?: Set<string>;
 }
 
-export default function Navbar({ profile }: NavbarProps) {
+export default function Navbar({ profile, hiddenSections = new Set() }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>("");
   const { user, isAuthenticated } = useAuth();
   const { theme } = useThemeSettings();
   const isAdmin = isAuthenticated && user?.role === "admin";
+  const scrollSpyRaf = useRef<number>(0);
 
   const layoutMode = theme?.layoutMode || DEFAULT_THEME.layoutMode;
   const sectionOrder = theme?.sectionOrder || DEFAULT_SECTION_ORDER;
   const isCombined = layoutMode === "combined";
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 40);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
 
   const displayName = profile?.fullName || "Alex Chen";
   const resumeUrl = profile?.resumeUrl;
@@ -62,14 +60,13 @@ export default function Navbar({ profile }: NavbarProps) {
     const links: { sectionId: string; label: string; href: string }[] = [];
 
     for (const sectionId of sections) {
-      // Skip sections that don't have nav links
+      // Skip sections that don't have nav links or are hidden
       if (EXCLUDED_SECTIONS.has(sectionId)) continue;
+      if (hiddenSections.has(sectionId)) continue;
 
       const meta = NAV_LINK_MAP[sectionId];
       if (!meta) continue;
 
-      // In combined mode, each Skills/Experience/Education link still shows separately
-      // but clicking them scrolls to the combined section and activates the correct tab
       links.push({
         sectionId,
         label: meta.label,
@@ -78,18 +75,88 @@ export default function Navbar({ profile }: NavbarProps) {
     }
 
     return links;
-  }, [sectionOrder, isCombined]);
+  }, [sectionOrder, isCombined, hiddenSections]);
 
-  // Handle nav link click — in combined mode, dispatch a custom event
-  // to switch the active pill tab in the CombinedSection
+  // Scroll-spy: detect which section is currently in view
+  const updateActiveSection = useCallback(() => {
+    const navbarHeight = 80;
+    const scrollY = window.scrollY;
+
+    // If near the top, no active section
+    if (scrollY < 100) {
+      setActiveSection("");
+      return;
+    }
+
+    // Check each section from bottom to top — the last one whose top is above the viewport midpoint wins
+    let currentSection = "";
+    const sectionIds = isCombined
+      ? navLinks.map((l) => {
+          if (COMBINED_SECTIONS.has(l.sectionId)) return "combined-section";
+          return l.sectionId;
+        })
+      : navLinks.map((l) => l.sectionId);
+
+    // Deduplicate (combined-section may appear multiple times)
+    const uniqueIds = Array.from(new Set(sectionIds));
+
+    for (const id of uniqueIds) {
+      const el = document.getElementById(id);
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      // Section is "active" if its top is above 40% of viewport
+      if (rect.top <= window.innerHeight * 0.4) {
+        // Map combined-section back to the actual section IDs
+        if (id === "combined-section") {
+          // Find which combined tab is most visible
+          for (const combinedId of ["skills", "experience", "education"]) {
+            const anchor = document.getElementById(combinedId);
+            if (anchor) {
+              currentSection = combinedId;
+            }
+          }
+        } else {
+          currentSection = id;
+        }
+      }
+    }
+
+    setActiveSection(currentSection);
+  }, [navLinks, isCombined]);
+
+  // Combined scroll handler for both scrolled state and scroll-spy
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 40);
+
+      // Throttle scroll-spy with rAF
+      if (scrollSpyRaf.current) {
+        cancelAnimationFrame(scrollSpyRaf.current);
+      }
+      scrollSpyRaf.current = requestAnimationFrame(updateActiveSection);
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    // Initial check
+    updateActiveSection();
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (scrollSpyRaf.current) {
+        cancelAnimationFrame(scrollSpyRaf.current);
+      }
+    };
+  }, [updateActiveSection]);
+
+  // Handle nav link click — smooth scroll + combined mode tab switching
   const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, link: typeof navLinks[0]) => {
-    if (isCombined && COMBINED_SECTIONS.has(link.sectionId)) {
-      e.preventDefault();
+    e.preventDefault();
 
+    if (isCombined && COMBINED_SECTIONS.has(link.sectionId)) {
       // Scroll to the combined section
       const combinedEl = document.getElementById("combined-section");
       if (combinedEl) {
-        const offset = 80; // navbar height
+        const offset = 80;
         const y = combinedEl.getBoundingClientRect().top + window.scrollY - offset;
         window.scrollTo({ top: y, behavior: "smooth" });
       }
@@ -98,8 +165,28 @@ export default function Navbar({ profile }: NavbarProps) {
       window.dispatchEvent(
         new CustomEvent("combined-tab-switch", { detail: link.sectionId })
       );
+    } else {
+      // Smooth scroll to the section
+      const el = document.getElementById(link.sectionId);
+      if (el) {
+        const offset = 80;
+        const y = el.getBoundingClientRect().top + window.scrollY - offset;
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
     }
+
+    setActiveSection(link.sectionId);
     setMobileOpen(false);
+  };
+
+  // Check if a nav link is active
+  const isLinkActive = (sectionId: string) => {
+    if (activeSection === sectionId) return true;
+    // In combined mode, if the active section is any combined section and this link is one too
+    if (isCombined && COMBINED_SECTIONS.has(sectionId) && COMBINED_SECTIONS.has(activeSection)) {
+      return activeSection === sectionId;
+    }
+    return false;
   };
 
   return (
@@ -114,6 +201,11 @@ export default function Navbar({ profile }: NavbarProps) {
         {/* Logo */}
         <a
           href="#"
+          onClick={(e) => {
+            e.preventDefault();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+            setActiveSection("");
+          }}
           className="text-xl md:text-2xl tracking-tight text-charcoal"
           style={{ fontFamily: "var(--font-display)" }}
         >
@@ -122,17 +214,24 @@ export default function Navbar({ profile }: NavbarProps) {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-1">
-          {navLinks.map((link) => (
-            <a
-              key={link.sectionId}
-              href={link.href}
-              onClick={(e) => handleNavClick(e, link)}
-              className="px-4 py-2 text-sm font-medium text-charcoal-light rounded-full transition-all duration-200 hover:bg-warm-100 hover:text-terracotta-dark"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              {link.label}
-            </a>
-          ))}
+          {navLinks.map((link) => {
+            const active = isLinkActive(link.sectionId);
+            return (
+              <a
+                key={link.sectionId}
+                href={link.href}
+                onClick={(e) => handleNavClick(e, link)}
+                className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
+                  active
+                    ? "bg-terracotta/10 text-terracotta-dark"
+                    : "text-charcoal-light hover:bg-warm-100 hover:text-terracotta-dark"
+                }`}
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                {link.label}
+              </a>
+            );
+          })}
           {resumeUrl && (
             <a
               href={resumeUrl}
@@ -145,7 +244,19 @@ export default function Navbar({ profile }: NavbarProps) {
               Resume
             </a>
           )}
-          <a href="#contact" className="pill-primary-sm ml-3">
+          <a
+            href="#contact"
+            onClick={(e) => {
+              e.preventDefault();
+              const el = document.getElementById("contact");
+              if (el) {
+                const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                window.scrollTo({ top: y, behavior: "smooth" });
+              }
+              setActiveSection("contact");
+            }}
+            className="pill-primary-sm ml-3"
+          >
             Get in Touch
           </a>
           {isAdmin && (
@@ -177,17 +288,24 @@ export default function Navbar({ profile }: NavbarProps) {
       {/* Mobile Nav */}
       {mobileOpen && (
         <div className="md:hidden bg-cream/95 backdrop-blur-xl border-t border-warm-200 px-4 pb-6 pt-2">
-          {navLinks.map((link) => (
-            <a
-              key={link.sectionId}
-              href={link.href}
-              onClick={(e) => handleNavClick(e, link)}
-              className="block py-3 text-base font-medium text-charcoal-light hover:text-terracotta-dark transition-colors"
-              style={{ fontFamily: "var(--font-body)" }}
-            >
-              {link.label}
-            </a>
-          ))}
+          {navLinks.map((link) => {
+            const active = isLinkActive(link.sectionId);
+            return (
+              <a
+                key={link.sectionId}
+                href={link.href}
+                onClick={(e) => handleNavClick(e, link)}
+                className={`block py-3 text-base font-medium transition-colors ${
+                  active
+                    ? "text-terracotta-dark"
+                    : "text-charcoal-light hover:text-terracotta-dark"
+                }`}
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                {link.label}
+              </a>
+            );
+          })}
           {resumeUrl && (
             <a
               href={resumeUrl}
@@ -203,7 +321,16 @@ export default function Navbar({ profile }: NavbarProps) {
           )}
           <a
             href="#contact"
-            onClick={() => setMobileOpen(false)}
+            onClick={(e) => {
+              e.preventDefault();
+              const el = document.getElementById("contact");
+              if (el) {
+                const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                window.scrollTo({ top: y, behavior: "smooth" });
+              }
+              setActiveSection("contact");
+              setMobileOpen(false);
+            }}
             className="pill-primary-sm mt-4 w-full text-center"
           >
             Get in Touch

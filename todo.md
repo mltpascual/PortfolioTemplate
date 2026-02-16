@@ -260,4 +260,14 @@
 ## Bug Fix: 413 Content Too Large on Vercel
 - [x] Add client-side image compression before upload (resize to max 1920px, JPEG quality reduction, under 3MB)
 - [x] Add clear user-facing error messages for 413, 401, 403, and generic upload errors
+- [x] Push to GitHub
+
+## Phase 32: Section Visibility, Scroll-Spy, Smooth Scrolling
+- [x] Add hidden_sections column to theme_settings in Supabase
+- [x] Update server db.ts and routers.ts for hidden_sections
+- [x] Add section visibility toggle UI in admin Layout tab
+- [x] Update Home.tsx to skip hidden sections
+- [x] Update Navbar to skip hidden section links
+- [x] Add scroll-spy to navbar (highlight active section on scroll, terracotta highlight)
+- [x] Add smooth scrolling behavior (CSS smooth-scroll already set, all nav clicks use smooth scroll)
 - [ ] Push to GitHub

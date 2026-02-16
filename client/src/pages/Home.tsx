@@ -45,6 +45,12 @@ export default function Home() {
   // Get layout settings from theme data
   const layoutMode = theme?.layoutMode || DEFAULT_THEME.layoutMode;
   const sectionOrder = theme?.sectionOrder || DEFAULT_SECTION_ORDER;
+  const hiddenSectionsStr = theme?.hiddenSections || "";
+
+  // Parse hidden sections
+  const hiddenSections = useMemo(() => {
+    return new Set(hiddenSectionsStr.split(",").map((s: string) => s.trim()).filter(Boolean));
+  }, [hiddenSectionsStr]);
 
   // Parse section order into array — ALL hooks must be called before any early return
   const sections = useMemo(() => {
@@ -59,6 +65,11 @@ export default function Home() {
     return sections.filter((s: string) => COMBINED_IDS.has(s)) as ("skills" | "experience" | "education")[];
   }, [sections]);
 
+  // Filter combined tab order to exclude hidden sections
+  const visibleCombinedTabOrder = useMemo(() => {
+    return combinedTabOrder.filter((s) => !hiddenSections.has(s));
+  }, [combinedTabOrder, hiddenSections]);
+
   // Early return AFTER all hooks
   if (isLoading || !portfolio) {
     return <LoadingSkeleton />;
@@ -69,9 +80,22 @@ export default function Home() {
   let combinedRendered = false;
 
   const renderSection = (sectionId: string) => {
+    // Skip hidden sections
+    if (hiddenSections.has(sectionId)) {
+      // In combined mode, if ALL combined sections are hidden, skip
+      if (isCombined && COMBINED_IDS.has(sectionId)) {
+        // Check if at least one combined section is visible
+        if (visibleCombinedTabOrder.length === 0) return null;
+        // Otherwise, let the combined section handle it (it will only show visible tabs)
+      } else {
+        return null;
+      }
+    }
+
     // In combined mode, replace the first occurrence of skills/experience/education with CombinedSection
     if (isCombined && COMBINED_IDS.has(sectionId)) {
       if (combinedRendered) return null; // Already rendered
+      if (visibleCombinedTabOrder.length === 0) return null; // All tabs hidden
       combinedRendered = true;
       return (
         <CombinedSection
@@ -79,7 +103,7 @@ export default function Home() {
           skills={portfolio.skills}
           experiences={portfolio.experiences}
           education={portfolio.education}
-          tabOrder={combinedTabOrder}
+          tabOrder={visibleCombinedTabOrder}
         />
       );
     }
@@ -106,7 +130,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen">
-      <Navbar profile={portfolio.profile} />
+      <Navbar profile={portfolio.profile} hiddenSections={hiddenSections} />
       <main>
         {sections.map((sectionId: string) => renderSection(sectionId))}
       </main>

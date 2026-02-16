@@ -10,6 +10,7 @@ export type ThemeSettingsData = {
   darkMode: boolean;
   layoutMode: string;
   sectionOrder: string;
+  hiddenSections: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -23,6 +24,7 @@ export const DEFAULT_THEME = {
   darkMode: false,
   layoutMode: "separate",
   sectionOrder: "hero,about,projects,skills,experience,education,contact",
+  hiddenSections: "",
 };
 
 // Curated font list for the selector

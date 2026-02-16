@@ -647,6 +647,7 @@ export interface ThemeSettings {
   dark_mode: boolean;
   layout_mode: string;
   section_order: string;
+  hidden_sections: string;
   created_at: string;
   updated_at: string;
 }
@@ -659,6 +660,7 @@ export const DEFAULT_THEME: Omit<ThemeSettings, 'id' | 'created_at' | 'updated_a
   dark_mode: false,
   layout_mode: 'separate',
   section_order: 'hero,about,projects,skills,experience,education,contact',
+  hidden_sections: '',
 };
 
 function themeSettingsToCamel(row: ThemeSettings) {
@@ -671,6 +673,7 @@ function themeSettingsToCamel(row: ThemeSettings) {
     darkMode: row.dark_mode ?? false,
     layoutMode: row.layout_mode || 'separate',
     sectionOrder: row.section_order || 'hero,about,projects,skills,experience,education,contact',
+    hiddenSections: row.hidden_sections || '',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -695,6 +698,7 @@ export async function getThemeSettings() {
       darkMode: DEFAULT_THEME.dark_mode,
       layoutMode: DEFAULT_THEME.layout_mode,
       sectionOrder: DEFAULT_THEME.section_order,
+      hiddenSections: DEFAULT_THEME.hidden_sections,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -710,6 +714,7 @@ export async function updateThemeSettings(input: {
   darkMode?: boolean;
   layoutMode?: string;
   sectionOrder?: string;
+  hiddenSections?: string;
 }) {
   const sb = getSupabaseAdmin();
   const snakeData: Record<string, any> = {};
@@ -720,6 +725,7 @@ export async function updateThemeSettings(input: {
   if (input.darkMode !== undefined) snakeData.dark_mode = input.darkMode;
   if (input.layoutMode !== undefined) snakeData.layout_mode = input.layoutMode;
   if (input.sectionOrder !== undefined) snakeData.section_order = input.sectionOrder;
+  if (input.hiddenSections !== undefined) snakeData.hidden_sections = input.hiddenSections;
   snakeData.updated_at = new Date().toISOString();
 
   // Get existing row
@@ -736,6 +742,7 @@ export async function updateThemeSettings(input: {
         dark_mode: input.darkMode ?? DEFAULT_THEME.dark_mode,
         layout_mode: input.layoutMode || DEFAULT_THEME.layout_mode,
         section_order: input.sectionOrder || DEFAULT_THEME.section_order,
+        hidden_sections: input.hiddenSections || DEFAULT_THEME.hidden_sections,
       })
       .select()
       .single();
@@ -762,6 +769,7 @@ export async function resetThemeSettings() {
     darkMode: DEFAULT_THEME.dark_mode,
     layoutMode: DEFAULT_THEME.layout_mode,
     sectionOrder: DEFAULT_THEME.section_order,
+    hiddenSections: DEFAULT_THEME.hidden_sections,
   });
 }
 
