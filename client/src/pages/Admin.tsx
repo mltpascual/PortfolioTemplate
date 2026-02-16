@@ -765,6 +765,61 @@ function ImageUploadField({ label, value, onChange }: { label: string; value: st
   const [dragOver, setDragOver] = useState(false);
   const uploadMutation = trpc.adminUpload.image.useMutation();
 
+  // Compress image on client side to fit within Vercel's 4.5MB body limit
+  const compressImage = async (file: File, maxSizeKB: number = 2500): Promise<{ base64: string; contentType: string; fileName: string }> => {
+    // SVGs don't need compression
+    if (file.type === "image/svg+xml") {
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => resolve((reader.result as string).split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      return { base64, contentType: file.type, fileName: file.name };
+    }
+
+    // Load image into canvas for compression
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = reject;
+      img.src = objectUrl;
+    });
+    URL.revokeObjectURL(objectUrl);
+
+    // Resize if too large (max 1920px on longest side)
+    let { width, height } = img;
+    const maxDim = 1920;
+    if (width > maxDim || height > maxDim) {
+      const ratio = Math.min(maxDim / width, maxDim / height);
+      width = Math.round(width * ratio);
+      height = Math.round(height * ratio);
+    }
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d")!;
+    ctx.drawImage(img, 0, 0, width, height);
+
+    // Try JPEG compression at decreasing quality until under maxSizeKB
+    let quality = 0.85;
+    let base64 = "";
+    let contentType = "image/jpeg";
+    const ext = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const dataUrl = canvas.toDataURL("image/jpeg", quality);
+      base64 = dataUrl.split(",")[1];
+      const sizeKB = (base64.length * 3) / 4 / 1024;
+      if (sizeKB <= maxSizeKB) break;
+      quality -= 0.15;
+    }
+
+    return { base64, contentType, fileName: ext };
+  };
+
   const handleUpload = async (file: File) => {
     if (!file) return;
 
@@ -775,37 +830,47 @@ function ImageUploadField({ label, value, onChange }: { label: string; value: st
       return;
     }
 
-    // Validate file size (7.5MB max)
-    if (file.size > 7.5 * 1024 * 1024) {
-      toast.error("File too large. Maximum 7.5MB.");
+    // Validate original file size (reject files over 20MB even before compression)
+    if (file.size > 20 * 1024 * 1024) {
+      toast.error("File too large. Please select an image under 20MB.");
       return;
     }
 
     setUploading(true);
     try {
-      // Convert to base64
-      const reader = new FileReader();
-      const base64 = await new Promise<string>((resolve, reject) => {
-        reader.onload = () => {
-          const result = reader.result as string;
-          resolve(result.split(",")[1]); // Remove data:...;base64, prefix
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
+      // Compress image client-side (resize + JPEG quality reduction)
+      const toastId = file.size > 1 * 1024 * 1024 ? toast.loading("Compressing image...") : undefined;
+      const { base64, contentType, fileName } = await compressImage(file);
+      if (toastId) toast.dismiss(toastId);
 
-      // Upload via tRPC mutation (more reliable than raw fetch)
+      // Check compressed size (base64 is ~33% larger, Vercel limit is 4.5MB body)
+      const compressedSizeKB = (base64.length * 3) / 4 / 1024;
+      if (compressedSizeKB > 3000) {
+        toast.error(`Image is still too large after compression (${(compressedSizeKB / 1024).toFixed(1)}MB). Please use a smaller image.`);
+        return;
+      }
+
+      // Upload via tRPC mutation
       const result = await uploadMutation.mutateAsync({
         fileData: base64,
-        fileName: file.name,
-        contentType: file.type as any,
+        fileName,
+        contentType: contentType as any,
       });
 
       onChange(result.url);
       toast.success("Image uploaded successfully!");
     } catch (error: any) {
-      const msg = error?.message || "Upload failed";
-      toast.error(msg);
+      // Handle specific error cases with clear messages
+      const msg = error?.message || "";
+      if (msg.includes("413") || msg.includes("Content Too Large") || msg.includes("entity too large") || msg.includes("Request En")) {
+        toast.error("Image is too large for the server. Please use a smaller image (under 3MB recommended).");
+      } else if (msg.includes("401") || msg.includes("Unauthorized")) {
+        toast.error("Session expired. Please refresh the page and try again.");
+      } else if (msg.includes("403") || msg.includes("Forbidden")) {
+        toast.error("You don't have permission to upload images.");
+      } else {
+        toast.error(msg || "Upload failed. Please try again.");
+      }
     } finally {
       setUploading(false);
     }

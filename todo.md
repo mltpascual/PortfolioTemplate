@@ -255,4 +255,9 @@
 - [x] Diagnose and fix JSON parsing error ("Request Entity Too Large" — tRPC maxBodySize was default ~1MB)
   - Fix: Added maxBodySize: 50MB to createExpressMiddleware options
   - Verified: 2.67MB base64 payload now passes through tRPC middleware
+- [x] Push to GitHub
+
+## Bug Fix: 413 Content Too Large on Vercel
+- [x] Add client-side image compression before upload (resize to max 1920px, JPEG quality reduction, under 3MB)
+- [x] Add clear user-facing error messages for 413, 401, 403, and generic upload errors
 - [ ] Push to GitHub
