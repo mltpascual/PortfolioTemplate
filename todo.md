@@ -280,4 +280,4 @@
 - [x] Implement dark mode color scheme in index.css
 - [x] Add dark mode toggle to navbar
 - [x] Add scroll animations (fade-in/slide-up) to all sections
-- [ ] Push to GitHub
+- [x] Push to GitHub
