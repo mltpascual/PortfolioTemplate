@@ -1,15 +1,18 @@
 /*
  * DESIGN: Warm Monochrome Editorial
  * Split layout: text left, form right.
- * Rounded input fields, pill submit button.
- * Warm card container with generous padding.
  */
 
 import { useEffect, useRef, useState } from "react";
 import { Send, MapPin, Mail, Phone } from "lucide-react";
 import { toast } from "sonner";
+import type { PortfolioData } from "@/hooks/usePortfolio";
 
-export default function ContactSection() {
+interface ContactSectionProps {
+  profile: PortfolioData["profile"];
+}
+
+export default function ContactSection({ profile }: ContactSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -28,6 +31,10 @@ export default function ContactSection() {
     e.preventDefault();
     toast.success("Message sent! I'll get back to you soon.");
   };
+
+  const email = profile?.email || "alex@example.com";
+  const phone = profile?.phone || "+1 (555) 123-4567";
+  const location = profile?.location || "San Francisco, CA";
 
   return (
     <section id="contact" ref={sectionRef} className="section-padding">
@@ -71,47 +78,53 @@ export default function ContactSection() {
             </p>
 
             <div className="space-y-5">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-terracotta/10 flex items-center justify-center flex-shrink-0">
-                  <Mail className="w-4 h-4 text-terracotta" />
+              {email && (
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-terracotta/10 flex items-center justify-center flex-shrink-0">
+                    <Mail className="w-4 h-4 text-terracotta" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-charcoal-light uppercase tracking-wider mb-0.5" style={{ fontFamily: "var(--font-body)" }}>
+                      Email
+                    </p>
+                    <a href={`mailto:${email}`} className="text-charcoal font-medium hover:text-terracotta transition-colors text-sm" style={{ fontFamily: "var(--font-body)" }}>
+                      {email}
+                    </a>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-charcoal-light uppercase tracking-wider mb-0.5" style={{ fontFamily: "var(--font-body)" }}>
-                    Email
-                  </p>
-                  <a href="mailto:alex@example.com" className="text-charcoal font-medium hover:text-terracotta transition-colors text-sm" style={{ fontFamily: "var(--font-body)" }}>
-                    alex@example.com
-                  </a>
-                </div>
-              </div>
+              )}
 
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-terracotta/10 flex items-center justify-center flex-shrink-0">
-                  <Phone className="w-4 h-4 text-terracotta" />
+              {phone && (
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-terracotta/10 flex items-center justify-center flex-shrink-0">
+                    <Phone className="w-4 h-4 text-terracotta" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-charcoal-light uppercase tracking-wider mb-0.5" style={{ fontFamily: "var(--font-body)" }}>
+                      Phone
+                    </p>
+                    <span className="text-charcoal font-medium text-sm" style={{ fontFamily: "var(--font-body)" }}>
+                      {phone}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-charcoal-light uppercase tracking-wider mb-0.5" style={{ fontFamily: "var(--font-body)" }}>
-                    Phone
-                  </p>
-                  <span className="text-charcoal font-medium text-sm" style={{ fontFamily: "var(--font-body)" }}>
-                    +1 (555) 123-4567
-                  </span>
-                </div>
-              </div>
+              )}
 
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-terracotta/10 flex items-center justify-center flex-shrink-0">
-                  <MapPin className="w-4 h-4 text-terracotta" />
+              {location && (
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-full bg-terracotta/10 flex items-center justify-center flex-shrink-0">
+                    <MapPin className="w-4 h-4 text-terracotta" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-charcoal-light uppercase tracking-wider mb-0.5" style={{ fontFamily: "var(--font-body)" }}>
+                      Location
+                    </p>
+                    <span className="text-charcoal font-medium text-sm" style={{ fontFamily: "var(--font-body)" }}>
+                      {location}
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-charcoal-light uppercase tracking-wider mb-0.5" style={{ fontFamily: "var(--font-body)" }}>
-                    Location
-                  </p>
-                  <span className="text-charcoal font-medium text-sm" style={{ fontFamily: "var(--font-body)" }}>
-                    San Francisco, CA
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 

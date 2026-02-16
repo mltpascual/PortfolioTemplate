@@ -5,7 +5,9 @@
  */
 
 import { useState, useEffect } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Settings } from "lucide-react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import type { PortfolioData } from "@/hooks/usePortfolio";
 
 const navLinks = [
   { label: "About", href: "#about" },
@@ -15,15 +17,23 @@ const navLinks = [
   { label: "Contact", href: "#contact" },
 ];
 
-export default function Navbar() {
+interface NavbarProps {
+  profile: PortfolioData["profile"];
+}
+
+export default function Navbar({ profile }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user, isAuthenticated } = useAuth();
+  const isAdmin = isAuthenticated && user?.role === "admin";
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const displayName = profile?.fullName || "Alex Chen";
 
   return (
     <header
@@ -40,7 +50,7 @@ export default function Navbar() {
           className="text-xl md:text-2xl tracking-tight text-charcoal"
           style={{ fontFamily: "var(--font-display)" }}
         >
-          Alex Chen
+          {displayName}
         </a>
 
         {/* Desktop Nav */}
@@ -58,6 +68,16 @@ export default function Navbar() {
           <a href="#contact" className="pill-primary-sm ml-3">
             Get in Touch
           </a>
+          {isAdmin && (
+            <a
+              href="/admin"
+              className="ml-2 p-2 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all duration-200"
+              aria-label="Admin Dashboard"
+              title="Admin Dashboard"
+            >
+              <Settings className="w-4 h-4" />
+            </a>
+          )}
         </div>
 
         {/* Mobile Menu Button */}
@@ -95,6 +115,16 @@ export default function Navbar() {
           >
             Get in Touch
           </a>
+          {isAdmin && (
+            <a
+              href="/admin"
+              onClick={() => setMobileOpen(false)}
+              className="pill-outline-sm mt-3 w-full text-center gap-2"
+            >
+              <Settings className="w-4 h-4" />
+              Admin Dashboard
+            </a>
+          )}
         </div>
       )}
     </header>

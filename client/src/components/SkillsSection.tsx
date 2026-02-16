@@ -1,7 +1,6 @@
 /*
  * DESIGN: Warm Monochrome Editorial
  * Bento-style skill cards with warm shadows and large border-radius.
- * SVG icons, no emojis. Staggered entrance animation.
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -14,60 +13,34 @@ import {
   Server,
   Smartphone,
   Terminal,
+  Cpu,
+  Cloud,
+  Shield,
+  Zap,
 } from "lucide-react";
+import type { PortfolioData } from "@/hooks/usePortfolio";
+import { parseTags } from "@/hooks/usePortfolio";
 
-const skillCategories = [
-  {
-    icon: Code2,
-    title: "Frontend",
-    skills: ["React", "TypeScript", "Next.js", "Vue.js", "Tailwind CSS"],
-    accent: "bg-terracotta/8",
-  },
-  {
-    icon: Server,
-    title: "Backend",
-    skills: ["Node.js", "Python", "Go", "REST APIs", "GraphQL"],
-    accent: "bg-warm-200/60",
-  },
-  {
-    icon: Database,
-    title: "Databases",
-    skills: ["PostgreSQL", "MongoDB", "Redis", "Prisma", "Drizzle"],
-    accent: "bg-terracotta/8",
-  },
-  {
-    icon: Globe,
-    title: "Cloud & DevOps",
-    skills: ["AWS", "Docker", "Kubernetes", "CI/CD", "Terraform"],
-    accent: "bg-warm-200/60",
-  },
-  {
-    icon: Smartphone,
-    title: "Mobile",
-    skills: ["React Native", "Flutter", "iOS", "Android", "PWA"],
-    accent: "bg-warm-200/60",
-  },
-  {
-    icon: Palette,
-    title: "Design",
-    skills: ["Figma", "Design Systems", "Prototyping", "UI/UX", "A11y"],
-    accent: "bg-terracotta/8",
-  },
-  {
-    icon: Terminal,
-    title: "Tools",
-    skills: ["Git", "Linux", "Vim", "Webpack", "Vite"],
-    accent: "bg-warm-200/60",
-  },
-  {
-    icon: Layers,
-    title: "Architecture",
-    skills: ["Microservices", "Event-Driven", "DDD", "TDD", "Clean Code"],
-    accent: "bg-terracotta/8",
-  },
-];
+const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Code2,
+  Database,
+  Globe,
+  Layers,
+  Palette,
+  Server,
+  Smartphone,
+  Terminal,
+  Cpu,
+  Cloud,
+  Shield,
+  Zap,
+};
 
-export default function SkillsSection() {
+interface SkillsSectionProps {
+  skills: PortfolioData["skills"];
+}
+
+export default function SkillsSection({ skills }: SkillsSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -113,11 +86,13 @@ export default function SkillsSection() {
 
         {/* Skills Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-          {skillCategories.map((cat, i) => {
-            const Icon = cat.icon;
+          {skills.map((cat, i) => {
+            const Icon = iconMap[cat.icon] || Code2;
+            const skillList = parseTags(cat.skills);
+            const accent = i % 2 === 0 ? "bg-terracotta/8" : "bg-warm-200/60";
             return (
               <div
-                key={cat.title}
+                key={cat.id}
                 className={`warm-card p-6 group transition-all duration-500 ${
                   visible
                     ? "opacity-100 translate-y-0"
@@ -126,7 +101,7 @@ export default function SkillsSection() {
                 style={{ transitionDelay: `${100 + i * 75}ms` }}
               >
                 <div
-                  className={`w-11 h-11 rounded-2xl ${cat.accent} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-200`}
+                  className={`w-11 h-11 rounded-2xl ${accent} flex items-center justify-center mb-4 group-hover:scale-105 transition-transform duration-200`}
                 >
                   <Icon className="w-5 h-5 text-terracotta" />
                 </div>
@@ -137,7 +112,7 @@ export default function SkillsSection() {
                   {cat.title}
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {cat.skills.map((skill) => (
+                  {skillList.map((skill) => (
                     <span
                       key={skill}
                       className="text-xs font-medium px-3 py-1.5 rounded-full bg-warm-100 text-charcoal-light border border-warm-200/60 hover:border-terracotta-light hover:text-terracotta-dark transition-colors duration-200"

@@ -1,10 +1,10 @@
 /*
  * DESIGN: Warm Monochrome Editorial
  * Clean footer with warm tones. Logo, nav links, social icons.
- * Subtle top border. Pill-shaped social icons.
  */
 
 import { Github, Linkedin, Mail, Twitter } from "lucide-react";
+import type { PortfolioData } from "@/hooks/usePortfolio";
 
 const footerLinks = [
   { label: "About", href: "#about" },
@@ -14,14 +14,24 @@ const footerLinks = [
   { label: "Contact", href: "#contact" },
 ];
 
-const socialLinks = [
-  { icon: Github, href: "https://github.com", label: "GitHub" },
-  { icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
-  { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
-  { icon: Mail, href: "mailto:alex@example.com", label: "Email" },
-];
+interface FooterProps {
+  profile: PortfolioData["profile"];
+}
 
-export default function Footer() {
+export default function Footer({ profile }: FooterProps) {
+  const displayName = profile?.fullName || "Alex Chen";
+  const githubUrl = profile?.githubUrl;
+  const linkedinUrl = profile?.linkedinUrl;
+  const twitterUrl = profile?.twitterUrl;
+  const email = profile?.email;
+
+  const socialLinks = [
+    ...(githubUrl ? [{ icon: Github, href: githubUrl, label: "GitHub" }] : []),
+    ...(linkedinUrl ? [{ icon: Linkedin, href: linkedinUrl, label: "LinkedIn" }] : []),
+    ...(twitterUrl ? [{ icon: Twitter, href: twitterUrl, label: "Twitter" }] : []),
+    ...(email ? [{ icon: Mail, href: `mailto:${email}`, label: "Email" }] : []),
+  ];
+
   return (
     <footer className="border-t border-warm-200 bg-warm-50/30">
       <div className="container py-12 md:py-16">
@@ -32,7 +42,7 @@ export default function Footer() {
             className="text-2xl tracking-tight text-charcoal"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            Alex Chen
+            {displayName}
           </a>
 
           {/* Nav */}
@@ -55,27 +65,29 @@ export default function Footer() {
             className="text-sm text-charcoal-light"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            &copy; {new Date().getFullYear()} Alex Chen. Crafted with care.
+            &copy; {new Date().getFullYear()} {displayName}. Crafted with care.
           </p>
 
           {/* Social */}
-          <div className="flex items-center gap-3">
-            {socialLinks.map((social) => {
-              const Icon = social.icon;
-              return (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2.5 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all duration-200"
-                  aria-label={social.label}
-                >
-                  <Icon className="w-4 h-4" />
-                </a>
-              );
-            })}
-          </div>
+          {socialLinks.length > 0 && (
+            <div className="flex items-center gap-3">
+              {socialLinks.map((social) => {
+                const Icon = social.icon;
+                return (
+                  <a
+                    key={social.label}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2.5 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all duration-200"
+                    aria-label={social.label}
+                  >
+                    <Icon className="w-4 h-4" />
+                  </a>
+                );
+              })}
+            </div>
+          )}
         </div>
       </div>
     </footer>

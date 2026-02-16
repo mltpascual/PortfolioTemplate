@@ -1,21 +1,18 @@
 /*
  * DESIGN: Warm Monochrome Editorial
  * Split layout: image left, text right. Offset grid.
- * Warm card with generous padding. Serif heading.
  */
 
 import { useEffect, useRef, useState } from "react";
+import type { PortfolioData } from "@/hooks/usePortfolio";
 
 const ABOUT_IMAGE = "https://private-us-east-1.manuscdn.com/sessionFile/td3PawS2CTYA7JoACPMNMZ/sandbox/l9YS4GhTwPQ9i9FbjWHhPd-img-2_1771203714000_na1fn_YWJvdXQtdmlzdWFs.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvdGQzUGF3UzJDVFlBN0pvQUNQTU5NWi9zYW5kYm94L2w5WVM0R2hUd1BROWk5RmJqV0hoUGQtaW1nLTJfMTc3MTIwMzcxNDAwMF9uYTFmbl9ZV0p2ZFhRdGRtbHpkV0ZzLnBuZz94LW9zcy1wcm9jZXNzPWltYWdlL3Jlc2l6ZSx3XzE5MjAsaF8xOTIwL2Zvcm1hdCx3ZWJwL3F1YWxpdHkscV84MCIsIkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc5ODc2MTYwMH19fV19&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=HyxzqFy6vv4jbgPujGSUYJpdLY0relm~6RrLeb4jHcZM0VyAQg~TEjccEeizIPGinkcWCxaJfdHBf4EpCERQcWyabACy~R3CT4WWQyGCSDKtKeVsdYh9nnLu3t0xbzNlWrMJNmEPT9ZwQHmTPdeg0zaqHIVOFcefsp6fRw8Q8PHt2eJSuKI7N63wunetnrjb7-ntqZi8BPO481YWRSbNZ~FAPSUC4Se8XhFsGgWVCd184jJKW8KjhfxoNAhLmek4JBBndL~GelqiwELfw7MrrPrzab~StCSi5h9EzvCD5U6Mtj8mXbP9Fkzc0Zv1lrWNcjOPtaUy8gXXNrmKR~1hWg__";
 
-const stats = [
-  { value: "5+", label: "Years Experience" },
-  { value: "30+", label: "Projects Delivered" },
-  { value: "15+", label: "Open Source Contributions" },
-  { value: "99%", label: "Client Satisfaction" },
-];
+interface AboutSectionProps {
+  profile: PortfolioData["profile"];
+}
 
-export default function AboutSection() {
+export default function AboutSection({ profile }: AboutSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -29,6 +26,15 @@ export default function AboutSection() {
     if (sectionRef.current) observer.observe(sectionRef.current);
     return () => observer.disconnect();
   }, []);
+
+  const bio = profile?.bio || "I'm a software engineer who believes great code should be invisible — users should only notice the seamless experience it creates. With a background in computer science and a passion for design, I bridge the gap between technical excellence and beautiful interfaces.\n\nMy approach combines clean architecture with thoughtful UX. I've worked across startups and established companies, building everything from real-time data platforms to consumer-facing mobile apps. I care deeply about performance, accessibility, and writing code that other developers enjoy reading.";
+
+  const stats = [
+    { value: profile?.yearsExperience || "5+", label: "Years Experience" },
+    { value: profile?.projectsDelivered || "30+", label: "Projects Delivered" },
+    { value: profile?.openSourceContributions || "15+", label: "Open Source Contributions" },
+    { value: profile?.clientSatisfaction || "99%", label: "Client Satisfaction" },
+  ];
 
   return (
     <section
@@ -64,7 +70,7 @@ export default function AboutSection() {
               <div className="absolute -inset-3 bg-terracotta/10 rounded-[1.75rem] blur-xl" />
               <img
                 src={ABOUT_IMAGE}
-                alt="Warm workspace with laptop, coffee, and notebook"
+                alt="Warm workspace"
                 className="relative w-full rounded-[1.25rem] shadow-[0_8px_32px_oklch(0.25_0.01_60/0.1)]"
                 loading="lazy"
               />
@@ -92,20 +98,9 @@ export default function AboutSection() {
               className="space-y-4 text-charcoal-light leading-relaxed text-base md:text-lg max-w-2xl mb-10"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              <p>
-                I'm a software engineer who believes great code should be
-                invisible — users should only notice the seamless experience it
-                creates. With a background in computer science and a passion for
-                design, I bridge the gap between technical excellence and
-                beautiful interfaces.
-              </p>
-              <p>
-                My approach combines clean architecture with thoughtful UX. I've
-                worked across startups and established companies, building
-                everything from real-time data platforms to consumer-facing
-                mobile apps. I care deeply about performance, accessibility, and
-                writing code that other developers enjoy reading.
-              </p>
+              {bio.split("\n\n").map((paragraph, i) => (
+                <p key={i}>{paragraph}</p>
+              ))}
             </div>
 
             {/* Stats Grid */}
