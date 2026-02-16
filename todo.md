@@ -52,3 +52,11 @@
 - [x] Update server/db.ts — getSupabaseAdmin() for writes, getSupabase() for reads
 - [x] All 15 tests passing (auth + supabase + service_role + portfolio CRUD)
 - [x] Save checkpoint
+
+## Phase 9: Fix Database Performance Issues
+- [x] Checked Supabase dashboard — slow queries are all internal PostgreSQL system queries, not portfolio queries
+- [x] Added 7 new indexes: sort_order (3 tables), featured partial index, featured+sort_order composite, created_at DESC (2 tables)
+- [x] RLS policies already optimized in Phase 8 (SELECT-only public, service_role for writes)
+- [x] Ran ANALYZE on all 4 tables to update query planner statistics
+- [x] All 15 tests still passing after performance optimizations
+- [x] Explain login/authentication system to user
