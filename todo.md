@@ -32,3 +32,14 @@
 - [x] Write vitest tests (12 tests passing)
 - [x] Verify 0 TypeScript errors
 - [x] Save checkpoint and deliver
+
+## Phase 7: Migrate to Supabase (PostgreSQL)
+- [x] Verify Supabase credentials (SUPABASE_URL + SUPABASE_KEY)
+- [x] Install @supabase/supabase-js SDK
+- [x] Create tables in Supabase via SQL Editor (profile, projects, experiences, skill_categories)
+- [x] Enable Row Level Security with public read policies
+- [x] Seed default profile data
+- [x] Rewrite server/db.ts to use Supabase SDK with camelCase/snake_case conversion
+- [x] Keep Drizzle/MySQL for built-in auth (users table)
+- [x] Test connection - 13 tests passing (Supabase + auth + portfolio CRUD)
+- [x] Save checkpoint
