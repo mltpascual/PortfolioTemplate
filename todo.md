@@ -115,3 +115,9 @@
 - [x] Add Resume button to Navbar (opens in new tab)
 - [x] Add resume_url field to profile in database
 - [x] Push to GitHub and verify on Vercel
+
+## Phase 16: Live iframe preview for project cards
+- [x] Replace static screenshots with live iframe preview of project sites
+- [x] Add fallback to static image when site is down or iframe fails to load
+- [x] Add toggle button to switch between live preview and static image
+- [x] Push to GitHub and verify on Vercel
