@@ -87,16 +87,20 @@ async function startServer() {
   // ADMIN: Image upload endpoint
   // ==========================================
   app.post("/api/upload", async (req, res) => {
+    console.log("[Upload] POST /api/upload received");
     try {
       // Verify admin auth via JWT cookie
       let user;
       try {
         user = await sdk.authenticateRequest(req as any);
-      } catch {
+        console.log("[Upload] Authenticated user:", user?.name, "role:", user?.role);
+      } catch (authErr) {
+        console.error("[Upload] Auth failed:", String(authErr));
         res.status(401).json({ error: "Unauthorized" });
         return;
       }
       if (!user || user.role !== "admin") {
+        console.error("[Upload] Forbidden - user role:", user?.role);
         res.status(403).json({ error: "Forbidden" });
         return;
       }

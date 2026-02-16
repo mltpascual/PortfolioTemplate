@@ -235,3 +235,9 @@
   - Navbar now dynamically orders links based on sectionOrder from theme settings
   - CombinedSection pill tabs now accept tabOrder prop and follow admin arrangement
   - Fixed React hooks ordering error (useMemo before early return)
+
+## Bug Fix: Image Upload 404 Error
+- [x] Diagnose and fix image upload returning 404
+  - Root cause: /api/upload Express route was not being reached in published version
+  - Fix: Switched to tRPC mutation (trpc.adminUpload.image) which routes through /api/trpc
+- [x] Verify fix by actually uploading a test image (confirmed: tRPC upload returns valid S3 URL)

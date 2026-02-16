@@ -763,6 +763,7 @@ function TextareaField({ label, value, onChange, placeholder, rows = 3 }: { labe
 function ImageUploadField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const uploadMutation = trpc.adminUpload.image.useMutation();
 
   const handleUpload = async (file: File) => {
     if (!file) return;
@@ -793,42 +794,18 @@ function ImageUploadField({ label, value, onChange }: { label: string; value: st
         reader.readAsDataURL(file);
       });
 
-      // Upload to server
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({
-          fileData: base64,
-          fileName: file.name,
-          contentType: file.type,
-        }),
+      // Upload via tRPC mutation (more reliable than raw fetch)
+      const result = await uploadMutation.mutateAsync({
+        fileData: base64,
+        fileName: file.name,
+        contentType: file.type as any,
       });
 
-      if (!response.ok) {
-        let errorMsg = "Upload failed";
-        try {
-          const text = await response.text();
-          const err = JSON.parse(text);
-          errorMsg = err.error || errorMsg;
-        } catch {
-          errorMsg = `Upload failed (${response.status} ${response.statusText})`;
-        }
-        throw new Error(errorMsg);
-      }
-
-      let url: string;
-      try {
-        const text = await response.text();
-        const data = JSON.parse(text);
-        url = data.url;
-      } catch {
-        throw new Error("Invalid response from server");
-      }
-      onChange(url);
+      onChange(result.url);
       toast.success("Image uploaded successfully!");
     } catch (error: any) {
-      toast.error(error.message || "Upload failed");
+      const msg = error?.message || "Upload failed";
+      toast.error(msg);
     } finally {
       setUploading(false);
     }

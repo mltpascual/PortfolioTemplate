@@ -4,6 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_core/trpc";
 import { z } from "zod";
 import * as db from "./db";
+import { storagePut } from "./storage";
 
 // ==========================================
 // INPUT VALIDATION HELPERS
@@ -343,6 +344,35 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         await db.deleteEducation(input.id);
         return { success: true };
+      }),
+  }),
+
+  // ==========================================
+  // ADMIN: Image upload via tRPC
+  // ==========================================
+  adminUpload: router({
+    image: adminProcedure
+      .input(
+        z.object({
+          fileData: z.string().max(15 * 1024 * 1024), // ~10MB base64
+          fileName: z.string().max(255),
+          contentType: z.enum(["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"]),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { fileData, fileName, contentType } = input;
+
+        // Convert base64 to buffer
+        const buffer = Buffer.from(fileData, "base64");
+
+        // Generate unique file key
+        const ext = fileName.split(".").pop() || "png";
+        const randomSuffix = Math.random().toString(36).substring(2, 10);
+        const fileKey = `portfolio/images/${Date.now()}-${randomSuffix}.${ext}`;
+
+        // Upload to S3
+        const { url } = await storagePut(fileKey, buffer, contentType);
+        return { url, key: fileKey };
       }),
   }),
 
