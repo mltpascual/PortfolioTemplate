@@ -1,7 +1,7 @@
 /*
  * DESIGN: Warm Monochrome Editorial
- * Masonry-style tile grid with configurable tile sizes (small, medium, large, wide).
- * Each project card adapts its grid span based on the admin-set tileSize.
+ * Uniform tile grid with configurable tile sizes (small, medium, large, wide).
+ * Each tile size has a FIXED height so all tiles of the same size are identical.
  * All projects display as static screenshot images (no iframe previews).
  */
 
@@ -53,18 +53,37 @@ function useInView(options?: IntersectionObserverInit) {
   return { ref, visible };
 }
 
-/* ── Tile size → grid classes mapping ──────────────────────────── */
-function getTileClasses(tileSize: string): { gridClass: string; aspectClass: string; layout: "overlay" | "stacked" } {
+/* ── Tile size → grid + height classes ───────────────────────────
+ * Each size maps to a FIXED height so every tile of the same size
+ * renders at exactly the same dimensions.
+ */
+function getTileConfig(tileSize: string) {
   switch (tileSize) {
     case "small":
-      return { gridClass: "md:col-span-1", aspectClass: "aspect-square", layout: "overlay" };
+      return {
+        gridClass: "md:col-span-1",
+        heightClass: "h-[280px] sm:h-[320px]",
+        layout: "overlay" as const,
+      };
     case "large":
-      return { gridClass: "md:col-span-2 md:row-span-2", aspectClass: "aspect-square", layout: "stacked" };
+      return {
+        gridClass: "md:col-span-2 md:row-span-2",
+        heightClass: "h-[560px] sm:h-[640px]",
+        layout: "overlay" as const,
+      };
     case "wide":
-      return { gridClass: "md:col-span-2", aspectClass: "aspect-video", layout: "stacked" };
+      return {
+        gridClass: "md:col-span-2",
+        heightClass: "h-[280px] sm:h-[320px]",
+        layout: "overlay" as const,
+      };
     case "medium":
     default:
-      return { gridClass: "md:col-span-1", aspectClass: "aspect-[4/5]", layout: "stacked" };
+      return {
+        gridClass: "md:col-span-1",
+        heightClass: "h-[380px] sm:h-[420px]",
+        layout: "stacked" as const,
+      };
   }
 }
 
@@ -106,7 +125,7 @@ function useTrackClick() {
   };
 }
 
-/* ── Tile Card (Overlay layout for small tiles) ───────────────── */
+/* ── Overlay Tile Card (used for small, large, wide) ─────────── */
 function OverlayTileCard({ project, index }: { project: PortfolioData["projects"][number]; index: number }) {
   const { ref, visible } = useInView();
   const tags = parseTags(project.tags);
@@ -117,7 +136,7 @@ function OverlayTileCard({ project, index }: { project: PortfolioData["projects"
   return (
     <div
       ref={ref}
-      className={`group relative warm-card overflow-hidden transition-all duration-600 ${
+      className={`group relative w-full h-full warm-card overflow-hidden transition-all duration-600 ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       }`}
     >
@@ -143,7 +162,7 @@ function OverlayTileCard({ project, index }: { project: PortfolioData["projects"
           </span>
         )}
         <h3
-          className="text-lg sm:text-xl text-white mb-1.5 leading-tight"
+          className="text-lg sm:text-xl text-white mb-1.5 leading-tight line-clamp-2"
           style={{ fontFamily: "var(--font-display)" }}
         >
           {project.title}
@@ -192,24 +211,23 @@ function OverlayTileCard({ project, index }: { project: PortfolioData["projects"
   );
 }
 
-/* ── Tile Card (Stacked layout for medium/large/wide) ─────────── */
-function StackedTileCard({ project, index, tileSize }: { project: PortfolioData["projects"][number]; index: number; tileSize: string }) {
+/* ── Stacked Tile Card (used for medium) ─────────────────────── */
+function StackedTileCard({ project, index }: { project: PortfolioData["projects"][number]; index: number }) {
   const { ref, visible } = useInView();
   const tags = parseTags(project.tags);
   const safeLiveUrl = sanitizeUrl(project.liveUrl);
   const safeGithubUrl = sanitizeUrl(project.githubUrl);
-  const isLarge = tileSize === "large";
   const trackClick = useTrackClick();
 
   return (
     <div
       ref={ref}
-      className={`group warm-card overflow-hidden transition-all duration-600 flex flex-col ${
+      className={`group w-full h-full warm-card overflow-hidden transition-all duration-600 flex flex-col ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       }`}
     >
-      {/* Image area */}
-      <div className={`relative overflow-hidden ${isLarge ? "flex-1 min-h-[200px]" : "aspect-video"}`}>
+      {/* Image area — fixed 55% of card height */}
+      <div className="relative overflow-hidden h-[55%] shrink-0">
         <ProjectImage
           imageUrl={project.imageUrl}
           title={project.title}
@@ -217,25 +235,25 @@ function StackedTileCard({ project, index, tileSize }: { project: PortfolioData[
         />
       </div>
 
-      {/* Content */}
-      <div className={`p-5 sm:p-6 flex flex-col ${isLarge ? "" : "flex-1"}`}>
+      {/* Content area — remaining 45% */}
+      <div className="p-4 sm:p-5 flex flex-col flex-1 overflow-hidden">
         {project.featured === 1 && (
           <span
-            className="inline-flex self-start items-center px-2.5 py-0.5 rounded-full bg-terracotta/10 text-terracotta text-[10px] font-semibold mb-2"
+            className="inline-flex self-start items-center px-2.5 py-0.5 rounded-full bg-terracotta/10 text-terracotta text-[10px] font-semibold mb-1.5 shrink-0"
             style={{ fontFamily: "var(--font-body)" }}
           >
             Featured
           </span>
         )}
         <h3
-          className={`text-charcoal mb-2 leading-tight ${isLarge ? "text-xl sm:text-2xl" : "text-lg sm:text-xl"}`}
+          className="text-charcoal mb-1.5 leading-tight text-base sm:text-lg line-clamp-1 shrink-0"
           style={{ fontFamily: "var(--font-display)" }}
         >
           {project.title}
         </h3>
         {project.description && (
           <p
-            className={`text-charcoal-light leading-relaxed mb-4 ${isLarge ? "text-sm line-clamp-4" : "text-xs sm:text-sm line-clamp-2"}`}
+            className="text-charcoal-light leading-relaxed mb-2 text-xs sm:text-sm line-clamp-2 shrink-0"
             style={{ fontFamily: "var(--font-body)" }}
           >
             {project.description}
@@ -244,11 +262,11 @@ function StackedTileCard({ project, index, tileSize }: { project: PortfolioData[
 
         {/* Tags */}
         {tags.length > 0 && (
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            {tags.slice(0, isLarge ? 6 : 4).map((tag) => (
+          <div className="flex flex-wrap gap-1.5 mb-2 shrink-0">
+            {tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="text-[10px] font-medium px-2.5 py-1 rounded-full bg-warm-100 text-charcoal-light border border-warm-200/60"
+                className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-warm-100 text-charcoal-light border border-warm-200/60"
                 style={{ fontFamily: "var(--font-body)" }}
               >
                 {tag}
@@ -257,8 +275,8 @@ function StackedTileCard({ project, index, tileSize }: { project: PortfolioData[
           </div>
         )}
 
-        {/* Actions */}
-        <div className="flex items-center gap-2 mt-auto">
+        {/* Actions — pinned to bottom */}
+        <div className="flex items-center gap-2 mt-auto shrink-0">
           {safeLiveUrl && safeLiveUrl !== "#" && (
             <a
               href={safeLiveUrl}
@@ -325,20 +343,18 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
           </div>
         </div>
 
-        {/* Tile Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 auto-rows-auto">
+        {/* Tile Grid — uniform heights per size */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
           {projects.map((project, i) => {
             const tileSize = project.tileSize || "medium";
-            const { gridClass, aspectClass, layout } = getTileClasses(tileSize);
+            const { gridClass, heightClass, layout } = getTileConfig(tileSize);
 
             return (
-              <div key={project.id} className={`${gridClass}`}>
+              <div key={project.id} className={`${gridClass} ${heightClass}`}>
                 {layout === "overlay" ? (
-                  <div className={aspectClass}>
-                    <OverlayTileCard project={project} index={i} />
-                  </div>
+                  <OverlayTileCard project={project} index={i} />
                 ) : (
-                  <StackedTileCard project={project} index={i} tileSize={tileSize} />
+                  <StackedTileCard project={project} index={i} />
                 )}
               </div>
             );

@@ -170,3 +170,6 @@
 
 ## Phase 22: Admin Logout Dropdown
 - [x] Add logout dropdown when clicking user name in admin dashboard upper right
+
+## Phase 23: Fix Tile Size Uniformity
+- [x] Fix tiles not being uniform in size when set to small or medium
