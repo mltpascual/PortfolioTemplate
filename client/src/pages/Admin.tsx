@@ -47,7 +47,7 @@ import {
   arrayMove,
   SortableContext,
   sortableKeyboardCoordinates,
-  verticalListSortingStrategy,
+  rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { SortableProjectItem } from "@/components/SortableProjectItem";
 
@@ -417,13 +417,13 @@ function ProjectsTab() {
         >
           <SortableContext
             items={projects.map((p) => p.id)}
-            strategy={verticalListSortingStrategy}
+            strategy={rectSortingStrategy}
           >
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {projects.map((project) => (
                 <SortableProjectItem
                   key={project.id}
-                  project={project as any}
+                  project={project}
                   onEdit={startEdit}
                   onDelete={(id) => deleteProject.mutate({ id })}
                 />

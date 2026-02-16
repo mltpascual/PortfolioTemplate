@@ -173,3 +173,7 @@
 
 ## Phase 23: Fix Tile Size Uniformity
 - [x] Fix tiles not being uniform in size when set to small or medium
+
+## Phase 24: Revert Tile Design + Admin Tile Grid
+- [x] Revert ProjectsSection to original stacked card design (image on top, content below, natural height)
+- [x] Convert admin Projects tab from list view to tile/grid layout with drag-and-drop
