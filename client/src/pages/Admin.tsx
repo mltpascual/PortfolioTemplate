@@ -50,6 +50,13 @@ import {
   rectSortingStrategy,
 } from "@dnd-kit/sortable";
 import { SortableProjectItem } from "@/components/SortableProjectItem";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 
 // ============================================================
 // PROFILE TAB
@@ -314,70 +321,74 @@ function ProjectsTab() {
         </button>
       </div>
 
-      {editing !== null && (
-        <div className="warm-card p-6 space-y-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg text-charcoal" style={{ fontFamily: "var(--font-display)" }}>
+      {/* Project Edit/Create Modal */}
+      <Dialog open={editing !== null} onOpenChange={(open) => { if (!open) setEditing(null); }}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-cream border-warm-200">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-charcoal" style={{ fontFamily: "var(--font-display)" }}>
               {editing === "new" ? "New Project" : "Edit Project"}
-            </h3>
-            <button onClick={() => setEditing(null)} className="p-1.5 rounded-full hover:bg-warm-100 transition-colors">
-              <X className="w-4 h-4 text-charcoal-light" />
-            </button>
-          </div>
-          <InputField label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} placeholder="Project name" />
-          <TextareaField label="Description" value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="What does this project do?" rows={3} />
-          <ImageUploadField
-            label="Project Screenshot"
-            value={form.imageUrl}
-            onChange={(v) => setForm({ ...form, imageUrl: v })}
-          />
-          <div className="grid grid-cols-2 gap-4">
-            <InputField label="Live URL" value={form.liveUrl} onChange={(v) => setForm({ ...form, liveUrl: v })} placeholder="https://..." />
-            <InputField label="GitHub URL" value={form.githubUrl} onChange={(v) => setForm({ ...form, githubUrl: v })} placeholder="https://..." />
-          </div>
-          <InputField label="Tags (comma-separated)" value={form.tags} onChange={(v) => setForm({ ...form, tags: v })} placeholder="React, TypeScript, Node.js" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <InputField label="Sort Order" value={String(form.sortOrder)} onChange={(v) => setForm({ ...form, sortOrder: parseInt(v) || 0 })} placeholder="1" />
-            <div className="flex items-center gap-3 pt-6">
-              <label className="text-sm font-medium text-charcoal" style={{ fontFamily: "var(--font-body)" }}>Featured</label>
-              <button
-                type="button"
-                onClick={() => setForm({ ...form, featured: form.featured === 1 ? 0 : 1 })}
-                className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${form.featured === 1 ? "bg-terracotta" : "bg-warm-300"}`}
-              >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ${form.featured === 1 ? "translate-x-6" : "translate-x-0"}`} />
+            </DialogTitle>
+            <DialogDescription className="text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
+              {editing === "new" ? "Add a new project to your portfolio." : "Update the details of this project."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <InputField label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} placeholder="Project name" />
+            <TextareaField label="Description" value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="What does this project do?" rows={3} />
+            <ImageUploadField
+              label="Project Screenshot"
+              value={form.imageUrl}
+              onChange={(v) => setForm({ ...form, imageUrl: v })}
+            />
+            <div className="grid grid-cols-2 gap-4">
+              <InputField label="Live URL" value={form.liveUrl} onChange={(v) => setForm({ ...form, liveUrl: v })} placeholder="https://..." />
+              <InputField label="GitHub URL" value={form.githubUrl} onChange={(v) => setForm({ ...form, githubUrl: v })} placeholder="https://..." />
+            </div>
+            <InputField label="Tags (comma-separated)" value={form.tags} onChange={(v) => setForm({ ...form, tags: v })} placeholder="React, TypeScript, Node.js" />
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <InputField label="Sort Order" value={String(form.sortOrder)} onChange={(v) => setForm({ ...form, sortOrder: parseInt(v) || 0 })} placeholder="1" />
+              <div className="flex items-center gap-3 pt-6">
+                <label className="text-sm font-medium text-charcoal" style={{ fontFamily: "var(--font-body)" }}>Featured</label>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, featured: form.featured === 1 ? 0 : 1 })}
+                  className={`relative w-12 h-6 rounded-full transition-colors duration-200 ${form.featured === 1 ? "bg-terracotta" : "bg-warm-300"}`}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ${form.featured === 1 ? "translate-x-6" : "translate-x-0"}`} />
+                </button>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-charcoal mb-2" style={{ fontFamily: "var(--font-body)" }}>Tile Size</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {(["small", "medium", "large", "wide"] as const).map((size) => (
+                    <button
+                      key={size}
+                      type="button"
+                      onClick={() => setForm({ ...form, tileSize: size })}
+                      className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors capitalize ${
+                        form.tileSize === size
+                          ? "bg-terracotta text-white"
+                          : "bg-warm-50 text-charcoal-light border border-warm-200 hover:bg-warm-100"
+                      }`}
+                    >
+                      {size}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button onClick={() => setEditing(null)} className="px-5 py-2.5 rounded-full text-sm font-medium text-charcoal-light hover:bg-warm-100 transition-colors" style={{ fontFamily: "var(--font-body)" }}>
+                Cancel
+              </button>
+              <button onClick={handleSave} disabled={createProject.isPending || updateProject.isPending} className="pill-primary gap-2">
+                {(createProject.isPending || updateProject.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {editing === "new" ? "Create Project" : "Update Project"}
               </button>
             </div>
-
-            <div className="pt-0 md:pt-0">
-              <label className="block text-sm font-medium text-charcoal mb-2" style={{ fontFamily: "var(--font-body)" }}>Tile Size</label>
-              <div className="flex flex-wrap gap-1.5">
-                {(["small", "medium", "large", "wide"] as const).map((size) => (
-                  <button
-                    key={size}
-                    type="button"
-                    onClick={() => setForm({ ...form, tileSize: size })}
-                    className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors capitalize ${
-                      form.tileSize === size
-                        ? "bg-terracotta text-white"
-                        : "bg-warm-50 text-charcoal-light border border-warm-200 hover:bg-warm-100"
-                    }`}
-                  >
-                    {size}
-                  </button>
-                ))}
-              </div>
-              <p className="text-[10px] text-charcoal-light/60 mt-1" style={{ fontFamily: "var(--font-body)" }}>
-                Controls card size in the grid layout
-              </p>
-            </div>
           </div>
-          <button onClick={handleSave} disabled={createProject.isPending || updateProject.isPending} className="pill-primary gap-2">
-            {(createProject.isPending || updateProject.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {editing === "new" ? "Create Project" : "Update Project"}
-          </button>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       {/* Bulk Tile Size Controls */}
       {projects && projects.length > 0 && (

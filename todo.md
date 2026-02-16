@@ -180,3 +180,7 @@
 
 ## Phase 25: Public Projects 3-Column Grid
 - [x] Change public ProjectsSection from 2-column to 3-column grid to match admin panel
+
+## Phase 26: Project Edit Modal + GitHub Deploy
+- [x] Convert project edit/create form to a modal dialog (click outside to close, Escape key)
+- [x] Push all latest changes to GitHub
