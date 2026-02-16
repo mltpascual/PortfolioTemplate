@@ -2,13 +2,14 @@
  * DESIGN: Warm Monochrome Editorial
  * Masonry-style tile grid with configurable tile sizes (small, medium, large, wide).
  * Each project card adapts its grid span based on the admin-set tileSize.
- * Live iframe previews with fallback to static images.
+ * All projects display as static screenshot images (no iframe previews).
  */
 
-import { useEffect, useRef, useState, useCallback } from "react";
-import { ArrowUpRight, Github, FolderOpen, Globe, Loader2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowUpRight, Github, FolderOpen } from "lucide-react";
 import type { PortfolioData } from "@/hooks/usePortfolio";
 import { parseTags } from "@/hooks/usePortfolio";
+import { trpc } from "@/lib/trpc";
 
 const FALLBACK_IMAGES = [
   "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&h=500&fit=crop",
@@ -67,113 +68,42 @@ function getTileClasses(tileSize: string): { gridClass: string; aspectClass: str
   }
 }
 
-/* ── Project Preview ───────────────────────────────────────────── */
-interface ProjectPreviewProps {
-  liveUrl: string | null;
+/* ── Project Image ────────────────────────────────────────────── */
+interface ProjectImageProps {
   imageUrl: string | null;
   title: string;
   fallbackIndex: number;
-  displayMode: string;
   className?: string;
 }
 
-function ProjectPreview({ liveUrl, imageUrl, title, fallbackIndex, displayMode, className = "" }: ProjectPreviewProps) {
-  const safeLiveUrl = sanitizeUrl(liveUrl);
+function ProjectImage({ imageUrl, title, fallbackIndex, className = "" }: ProjectImageProps) {
   const safeImageUrl = sanitizeUrl(imageUrl);
-  const mode = (displayMode === "live" && safeLiveUrl) ? "live" : "image";
-  const [iframeLoaded, setIframeLoaded] = useState(false);
-  const [iframeFailed, setIframeFailed] = useState(false);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const fallbackImage = safeImageUrl || FALLBACK_IMAGES[fallbackIndex % FALLBACK_IMAGES.length];
-
-  useEffect(() => {
-    if (mode === "live" && safeLiveUrl) {
-      setIframeLoaded(false);
-      setIframeFailed(false);
-      timeoutRef.current = setTimeout(() => setIframeFailed(true), 10000);
-    }
-    return () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    };
-  }, [mode, safeLiveUrl]);
-
-  const handleIframeLoad = useCallback(() => {
-    setIframeLoaded(true);
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-  }, []);
-
-  const handleIframeError = useCallback(() => {
-    setIframeFailed(true);
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
-  }, []);
-
-  const showLivePreview = mode === "live" && safeLiveUrl && !iframeFailed;
+  const fallbackImage = FALLBACK_IMAGES[fallbackIndex % FALLBACK_IMAGES.length];
 
   return (
     <div className={`relative w-full h-full overflow-hidden ${className}`}>
-      {/* Live Preview (iframe) */}
-      {showLivePreview && (
-        <div className="absolute inset-0">
-          {!iframeLoaded && (
-            <div className="absolute inset-0 bg-warm-100 flex flex-col items-center justify-center z-10">
-              <Loader2 className="w-6 h-6 text-terracotta animate-spin mb-1" />
-              <span className="text-xs text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
-                Loading...
-              </span>
-            </div>
-          )}
-          <iframe
-            ref={iframeRef}
-            src={safeLiveUrl!}
-            title={`${title} - Live Preview`}
-            className={`border-0 transition-opacity duration-300 ${iframeLoaded ? "opacity-100" : "opacity-0"}`}
-            style={{
-              transform: "scale(0.5)",
-              transformOrigin: "top left",
-              width: "200%",
-              height: "200%",
-              pointerEvents: "none",
-              position: "absolute",
-              top: 0,
-              left: 0,
-            }}
-            sandbox="allow-scripts allow-same-origin"
-            loading="lazy"
-            onLoad={handleIframeLoad}
-            onError={handleIframeError}
-          />
-        </div>
-      )}
-
-      {/* Static Image (or fallback when iframe fails) */}
-      {(!showLivePreview || (mode === "live" && iframeFailed)) && (
-        <div className="absolute inset-0">
-          {(safeImageUrl || fallbackImage) ? (
-            <>
-              <img
-                src={safeImageUrl || fallbackImage}
-                alt={title}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                loading="lazy"
-              />
-              {mode === "live" && iframeFailed && (
-                <div className="absolute bottom-2 left-2 z-10 flex items-center gap-1 bg-charcoal/70 backdrop-blur-sm text-white/90 text-[10px] px-2 py-1 rounded-full">
-                  <Globe className="w-2.5 h-2.5" />
-                  Unavailable
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="w-full h-full bg-warm-100 flex items-center justify-center">
-              <FolderOpen className="w-12 h-12 text-warm-300" />
-            </div>
-          )}
+      {(safeImageUrl || fallbackImage) ? (
+        <img
+          src={safeImageUrl || fallbackImage}
+          alt={title}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+        />
+      ) : (
+        <div className="w-full h-full bg-warm-100 flex items-center justify-center">
+          <FolderOpen className="w-12 h-12 text-warm-300" />
         </div>
       )}
     </div>
   );
+}
+
+/* ── Analytics hook ───────────────────────────────────────────── */
+function useTrackClick() {
+  const trackMutation = trpc.analytics.track.useMutation();
+  return (projectId: number) => {
+    trackMutation.mutate({ projectId, eventType: "click" });
+  };
 }
 
 /* ── Tile Card (Overlay layout for small tiles) ───────────────── */
@@ -182,6 +112,7 @@ function OverlayTileCard({ project, index }: { project: PortfolioData["projects"
   const tags = parseTags(project.tags);
   const safeLiveUrl = sanitizeUrl(project.liveUrl);
   const safeGithubUrl = sanitizeUrl(project.githubUrl);
+  const trackClick = useTrackClick();
 
   return (
     <div
@@ -190,13 +121,11 @@ function OverlayTileCard({ project, index }: { project: PortfolioData["projects"
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       }`}
     >
-      {/* Full-bleed preview */}
-      <ProjectPreview
-        liveUrl={project.liveUrl}
+      {/* Full-bleed image */}
+      <ProjectImage
         imageUrl={project.imageUrl}
         title={project.title}
         fallbackIndex={index}
-        displayMode={project.displayMode || "live"}
         className="absolute inset-0"
       />
 
@@ -238,6 +167,7 @@ function OverlayTileCard({ project, index }: { project: PortfolioData["projects"
               href={safeLiveUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackClick(project.id)}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-sm text-white text-xs font-medium hover:bg-white/30 transition-colors"
             >
               Demo
@@ -249,6 +179,7 @@ function OverlayTileCard({ project, index }: { project: PortfolioData["projects"
               href={safeGithubUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackClick(project.id)}
               className="p-2 rounded-full bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 transition-colors"
               aria-label="View source code"
             >
@@ -268,6 +199,7 @@ function StackedTileCard({ project, index, tileSize }: { project: PortfolioData[
   const safeLiveUrl = sanitizeUrl(project.liveUrl);
   const safeGithubUrl = sanitizeUrl(project.githubUrl);
   const isLarge = tileSize === "large";
+  const trackClick = useTrackClick();
 
   return (
     <div
@@ -276,15 +208,13 @@ function StackedTileCard({ project, index, tileSize }: { project: PortfolioData[
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       }`}
     >
-      {/* Preview area */}
+      {/* Image area */}
       <div className={`relative overflow-hidden ${isLarge ? "flex-1 min-h-[200px]" : "aspect-video"}`}>
-        <ProjectPreview
-          liveUrl={project.liveUrl}
+        <ProjectImage
           imageUrl={project.imageUrl}
           title={project.title}
           fallbackIndex={index}
-        displayMode={project.displayMode || "live"}
-      />
+        />
       </div>
 
       {/* Content */}
@@ -334,6 +264,7 @@ function StackedTileCard({ project, index, tileSize }: { project: PortfolioData[
               href={safeLiveUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackClick(project.id)}
               className="pill-primary-sm gap-1.5 text-xs"
             >
               Live Demo
@@ -345,6 +276,7 @@ function StackedTileCard({ project, index, tileSize }: { project: PortfolioData[
               href={safeGithubUrl}
               target="_blank"
               rel="noopener noreferrer"
+              onClick={() => trackClick(project.id)}
               className="p-2 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all duration-200"
               aria-label="View source code"
             >

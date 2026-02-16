@@ -13,7 +13,6 @@ interface SortableProjectItemProps {
     title: string;
     description: string | null;
     featured: number;
-    displayMode?: string;
     tileSize?: string;
     sortOrder: number;
   };
@@ -68,15 +67,6 @@ export function SortableProjectItem({ project, onEdit, onDelete }: SortableProje
               Featured
             </span>
           )}
-          <span
-            className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-              project.displayMode === "image"
-                ? "bg-warm-200/60 text-charcoal-light"
-                : "bg-green-100 text-green-700"
-            }`}
-          >
-            {project.displayMode === "image" ? "Image" : "Live"}
-          </span>
           <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-50 text-blue-600 capitalize">
             {project.tileSize || "medium"}
           </span>

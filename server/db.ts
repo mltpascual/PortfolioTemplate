@@ -70,7 +70,6 @@ export interface Project {
   github_url: string;
   tags: string | null;
   featured: boolean;
-  display_mode: string;
   tile_size: string;
   sort_order: number;
   created_at: string;
@@ -139,7 +138,6 @@ function projectToCamel(row: Project) {
     githubUrl: row.github_url,
     tags: row.tags,
     featured: row.featured ? 1 : 0,
-    displayMode: row.display_mode || 'live',
     tileSize: row.tile_size || 'medium',
     sortOrder: row.sort_order,
     createdAt: row.created_at,
@@ -221,7 +219,6 @@ function projectToSnake(data: Record<string, any>) {
     githubUrl: "github_url",
     tags: "tags",
     featured: "featured",
-    displayMode: "display_mode",
     tileSize: "tile_size",
     sortOrder: "sort_order",
   };
@@ -623,6 +620,96 @@ export async function resetThemeSettings() {
     bodyFont: DEFAULT_THEME.body_font,
     darkMode: DEFAULT_THEME.dark_mode,
   });
+}
+
+// ==========================================
+// PROJECT ANALYTICS (Supabase)
+// ==========================================
+
+export interface ProjectAnalytics {
+  id: number;
+  project_id: number;
+  event_type: string;
+  referrer: string | null;
+  user_agent: string | null;
+  created_at: string;
+}
+
+/** Track a project click/view event */
+export async function trackProjectEvent(input: {
+  projectId: number;
+  eventType: string;
+  referrer?: string;
+  userAgent?: string;
+}) {
+  const sb = getSupabaseAdmin();
+  const { error } = await sb.from("project_analytics").insert({
+    project_id: input.projectId,
+    event_type: input.eventType,
+    referrer: input.referrer || null,
+    user_agent: input.userAgent || null,
+  });
+  if (error) {
+    console.error('[DB] Failed to track project event:', error.message);
+    // Don't throw — analytics should never break the user experience
+  }
+}
+
+/** Get analytics summary for all projects (admin) */
+export async function getProjectAnalyticsSummary() {
+  const sb = getSupabase();
+  const { data, error } = await sb
+    .from("project_analytics")
+    .select("project_id, event_type, created_at");
+
+  if (error || !data) return [];
+
+  // Aggregate by project_id
+  const summary: Record<number, { projectId: number; clicks: number; views: number; lastEvent: string }> = {};
+  for (const row of data) {
+    if (!summary[row.project_id]) {
+      summary[row.project_id] = { projectId: row.project_id, clicks: 0, views: 0, lastEvent: row.created_at };
+    }
+    if (row.event_type === 'click') summary[row.project_id].clicks++;
+    else if (row.event_type === 'view') summary[row.project_id].views++;
+    if (row.created_at > summary[row.project_id].lastEvent) {
+      summary[row.project_id].lastEvent = row.created_at;
+    }
+  }
+  return Object.values(summary);
+}
+
+/** Get analytics for a specific project with time series data */
+export async function getProjectAnalyticsDetail(projectId: number) {
+  const sb = getSupabase();
+  const { data, error } = await sb
+    .from("project_analytics")
+    .select("*")
+    .eq("project_id", projectId)
+    .order("created_at", { ascending: false })
+    .limit(500);
+
+  if (error || !data) return { events: [], totalClicks: 0, totalViews: 0 };
+
+  let totalClicks = 0;
+  let totalViews = 0;
+  for (const row of data) {
+    if (row.event_type === 'click') totalClicks++;
+    else if (row.event_type === 'view') totalViews++;
+  }
+
+  return {
+    events: data.map((row: ProjectAnalytics) => ({
+      id: row.id,
+      projectId: row.project_id,
+      eventType: row.event_type,
+      referrer: row.referrer,
+      userAgent: row.user_agent,
+      createdAt: row.created_at,
+    })),
+    totalClicks,
+    totalViews,
+  };
 }
 
 // ==========================================

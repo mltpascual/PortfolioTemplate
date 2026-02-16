@@ -8,6 +8,10 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
+import { storagePut } from "../storage";
+import { sdk } from "./sdk";
+import { ENV } from "./env";
+import cookieLib from "cookie";
 import { serveStatic, setupVite } from "./vite";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -78,6 +82,62 @@ async function startServer() {
 
   // OAuth callback under /api/auth/*
   registerOAuthRoutes(app);
+
+  // ==========================================
+  // ADMIN: Image upload endpoint
+  // ==========================================
+  app.post("/api/upload", async (req, res) => {
+    try {
+      // Verify admin auth via JWT cookie
+      let user;
+      try {
+        user = await sdk.authenticateRequest(req as any);
+      } catch {
+        res.status(401).json({ error: "Unauthorized" });
+        return;
+      }
+      if (!user || user.openId !== ENV.ownerOpenId) {
+        res.status(403).json({ error: "Forbidden" });
+        return;
+      }
+
+      const { fileData, fileName, contentType } = req.body;
+      if (!fileData || !fileName || !contentType) {
+        res.status(400).json({ error: "Missing fileData, fileName, or contentType" });
+        return;
+      }
+
+      // Validate content type
+      const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
+      if (!allowedTypes.includes(contentType)) {
+        res.status(400).json({ error: "Invalid file type. Allowed: JPEG, PNG, GIF, WebP, SVG" });
+        return;
+      }
+
+      // Validate file size (base64 is ~33% larger than binary, so 10MB base64 ≈ 7.5MB file)
+      const maxBase64Size = 10 * 1024 * 1024; // 10MB base64
+      if (fileData.length > maxBase64Size) {
+        res.status(400).json({ error: "File too large. Maximum 7.5MB." });
+        return;
+      }
+
+      // Convert base64 to buffer
+      const buffer = Buffer.from(fileData, "base64");
+
+      // Generate unique file key
+      const ext = fileName.split(".").pop() || "png";
+      const randomSuffix = Math.random().toString(36).substring(2, 10);
+      const fileKey = `portfolio/images/${Date.now()}-${randomSuffix}.${ext}`;
+
+      // Upload to S3
+      const { url } = await storagePut(fileKey, buffer, contentType);
+
+      res.json({ url, key: fileKey });
+    } catch (error) {
+      console.error("[Upload] Failed:", error);
+      res.status(500).json({ error: "Upload failed" });
+    }
+  });
 
   // tRPC API
   app.use(

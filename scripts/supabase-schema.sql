@@ -35,7 +35,6 @@ CREATE TABLE IF NOT EXISTS projects (
   github_url VARCHAR(500) DEFAULT '',
   tags TEXT,
   featured BOOLEAN DEFAULT false,
-  display_mode VARCHAR(20) DEFAULT 'live',
   tile_size VARCHAR(20) DEFAULT 'medium',
   sort_order INT DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -64,6 +63,16 @@ CREATE TABLE IF NOT EXISTS skill_categories (
   sort_order INT DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Project analytics table
+CREATE TABLE IF NOT EXISTS project_analytics (
+  id SERIAL PRIMARY KEY,
+  project_id INT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  event_type VARCHAR(50) NOT NULL DEFAULT 'click',
+  referrer TEXT,
+  user_agent TEXT,
+  created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Enable Row Level Security (RLS) but allow all reads for public portfolio

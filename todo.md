@@ -152,3 +152,13 @@
 - [x] Add drag-and-drop reordering in admin project list (replace manual sort_order editing)
 - [x] Write vitest tests for new drag-and-drop reorder endpoint
 - [ ] Push to GitHub and verify
+
+## Phase 20: Analytics, Image Upload, Remove Iframe
+- [x] Remove all iframe functionality from ProjectsSection (live preview, display_mode toggle)
+- [x] Remove display_mode column/logic from admin, router, db — everything is screenshot/image now
+- [x] Clean up all iframe-related CSS, components, and utilities
+- [x] Add image upload functionality in admin panel (upload to S3, store URL in DB)
+- [x] Make all portfolio images dynamic from Supabase (avatar, project screenshots, hero image)
+- [x] Add lightweight analytics tracking for project clicks and page engagement
+- [x] Write tests for new features
+- [x] Push to GitHub and verify

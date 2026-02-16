@@ -248,6 +248,42 @@ export const appRouter = router({
   }),
 
   // ==========================================
+  // PUBLIC: Track project analytics events
+  // ==========================================
+  analytics: router({
+    track: publicProcedure
+      .input(
+        z.object({
+          projectId: z.number().int().positive(),
+          eventType: z.enum(["click", "view"]),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        await db.trackProjectEvent({
+          projectId: input.projectId,
+          eventType: input.eventType,
+          referrer: ctx.req.headers.referer || undefined,
+          userAgent: ctx.req.headers["user-agent"] || undefined,
+        });
+        return { success: true };
+      }),
+  }),
+
+  // ==========================================
+  // ADMIN: Analytics dashboard
+  // ==========================================
+  adminAnalytics: router({
+    summary: adminProcedure.query(async () => {
+      return db.getProjectAnalyticsSummary();
+    }),
+    detail: adminProcedure
+      .input(z.object({ projectId: z.number().int().positive() }))
+      .query(async ({ input }) => {
+        return db.getProjectAnalyticsDetail(input.projectId);
+      }),
+  }),
+
+  // ==========================================
   // ADMIN: Skills management
   // ==========================================
   adminSkills: router({

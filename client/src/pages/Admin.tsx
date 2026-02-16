@@ -25,6 +25,12 @@ import {
   GripVertical,
   Palette,
   RotateCcw,
+  Upload,
+  ImageIcon,
+  BarChart3,
+  MousePointerClick,
+  Eye,
+  TrendingUp,
 } from "lucide-react";
 import {
   DndContext,
@@ -228,7 +234,6 @@ function ProjectsTab() {
     githubUrl: "",
     tags: "",
     featured: 0,
-    displayMode: "live" as string,
     tileSize: "medium" as string,
     sortOrder: 0,
   });
@@ -265,7 +270,6 @@ function ProjectsTab() {
       githubUrl: project.githubUrl || "",
       tags: project.tags || "",
       featured: project.featured || 0,
-      displayMode: project.displayMode || "live",
       tileSize: project.tileSize || "medium",
       sortOrder: project.sortOrder || 0,
     });
@@ -273,7 +277,7 @@ function ProjectsTab() {
 
   const startNew = () => {
     setEditing("new");
-    setForm({ title: "", description: "", imageUrl: "", liveUrl: "", githubUrl: "", tags: "", featured: 0, displayMode: "live", tileSize: "medium", sortOrder: (projects?.length || 0) + 1 });
+    setForm({ title: "", description: "", imageUrl: "", liveUrl: "", githubUrl: "", tags: "", featured: 0, tileSize: "medium", sortOrder: (projects?.length || 0) + 1 });
   };
 
   const handleSave = () => {
@@ -311,7 +315,11 @@ function ProjectsTab() {
           </div>
           <InputField label="Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} placeholder="Project name" />
           <TextareaField label="Description" value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="What does this project do?" rows={3} />
-          <InputField label="Image URL" value={form.imageUrl} onChange={(v) => setForm({ ...form, imageUrl: v })} placeholder="https://..." />
+          <ImageUploadField
+            label="Project Screenshot"
+            value={form.imageUrl}
+            onChange={(v) => setForm({ ...form, imageUrl: v })}
+          />
           <div className="grid grid-cols-2 gap-4">
             <InputField label="Live URL" value={form.liveUrl} onChange={(v) => setForm({ ...form, liveUrl: v })} placeholder="https://..." />
             <InputField label="GitHub URL" value={form.githubUrl} onChange={(v) => setForm({ ...form, githubUrl: v })} placeholder="https://..." />
@@ -329,25 +337,7 @@ function ProjectsTab() {
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ${form.featured === 1 ? "translate-x-6" : "translate-x-0"}`} />
               </button>
             </div>
-            <div className="flex items-center gap-3 pt-6">
-              <label className="text-sm font-medium text-charcoal" style={{ fontFamily: "var(--font-body)" }}>Display</label>
-              <div className="flex rounded-full overflow-hidden border border-warm-200">
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, displayMode: "live" })}
-                  className={`px-3 py-1 text-xs font-medium transition-colors ${form.displayMode === "live" ? "bg-terracotta text-white" : "bg-warm-50 text-charcoal-light hover:bg-warm-100"}`}
-                >
-                  Live
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setForm({ ...form, displayMode: "image" })}
-                  className={`px-3 py-1 text-xs font-medium transition-colors ${form.displayMode === "image" ? "bg-terracotta text-white" : "bg-warm-50 text-charcoal-light hover:bg-warm-100"}`}
-                >
-                  Image
-                </button>
-              </div>
-            </div>
+
             <div className="pt-0 md:pt-0">
               <label className="block text-sm font-medium text-charcoal mb-2" style={{ fontFamily: "var(--font-body)" }}>Tile Size</label>
               <div className="flex flex-wrap gap-1.5">
@@ -677,6 +667,159 @@ function TextareaField({ label, value, onChange, placeholder, rows = 3 }: { labe
         className="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-warm-200 text-charcoal placeholder:text-charcoal-light/50 focus:outline-none focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 transition-all text-sm resize-none"
         style={{ fontFamily: "var(--font-body)" }}
       />
+    </div>
+  );
+}
+
+function ImageUploadField({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleUpload = async (file: File) => {
+    if (!file) return;
+
+    // Validate file type
+    const allowedTypes = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
+    if (!allowedTypes.includes(file.type)) {
+      toast.error("Invalid file type. Allowed: JPEG, PNG, GIF, WebP, SVG");
+      return;
+    }
+
+    // Validate file size (7.5MB max)
+    if (file.size > 7.5 * 1024 * 1024) {
+      toast.error("File too large. Maximum 7.5MB.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      // Convert to base64
+      const reader = new FileReader();
+      const base64 = await new Promise<string>((resolve, reject) => {
+        reader.onload = () => {
+          const result = reader.result as string;
+          resolve(result.split(",")[1]); // Remove data:...;base64, prefix
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      // Upload to server
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          fileData: base64,
+          fileName: file.name,
+          contentType: file.type,
+        }),
+      });
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Upload failed");
+      }
+
+      const { url } = await response.json();
+      onChange(url);
+      toast.success("Image uploaded successfully!");
+    } catch (error: any) {
+      toast.error(error.message || "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) handleUpload(file);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) handleUpload(file);
+  };
+
+  return (
+    <div>
+      <label className="block text-sm font-medium text-charcoal mb-1.5" style={{ fontFamily: "var(--font-body)" }}>{label}</label>
+      
+      {/* Current image preview */}
+      {value && (
+        <div className="mb-3 relative group">
+          <img
+            src={value}
+            alt="Preview"
+            className="w-full max-h-48 object-cover rounded-xl border border-warm-200"
+          />
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="absolute top-2 right-2 p-1.5 rounded-full bg-red-500/80 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+            title="Remove image"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Upload zone */}
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+        onDragLeave={() => setDragOver(false)}
+        onDrop={handleDrop}
+        className={`relative rounded-xl border-2 border-dashed transition-all cursor-pointer ${
+          dragOver
+            ? "border-terracotta bg-terracotta/5"
+            : "border-warm-200 bg-warm-50 hover:border-warm-300 hover:bg-warm-100/50"
+        } ${uploading ? "pointer-events-none opacity-60" : ""}`}
+      >
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/gif,image/webp,image/svg+xml"
+          onChange={handleFileSelect}
+          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+          disabled={uploading}
+        />
+        <div className="flex flex-col items-center justify-center py-6 px-4">
+          {uploading ? (
+            <>
+              <Loader2 className="w-8 h-8 text-terracotta animate-spin mb-2" />
+              <p className="text-sm text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>Uploading...</p>
+            </>
+          ) : (
+            <>
+              <Upload className="w-8 h-8 text-warm-300 mb-2" />
+              <p className="text-sm text-charcoal" style={{ fontFamily: "var(--font-body)" }}>
+                <span className="text-terracotta font-medium">Click to upload</span> or drag and drop
+              </p>
+              <p className="text-xs text-charcoal-light/60 mt-1" style={{ fontFamily: "var(--font-body)" }}>
+                JPEG, PNG, GIF, WebP, SVG (max 7.5MB)
+              </p>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Manual URL fallback */}
+      <div className="mt-2">
+        <details className="group">
+          <summary className="text-xs text-charcoal-light/60 cursor-pointer hover:text-charcoal-light transition-colors" style={{ fontFamily: "var(--font-body)" }}>
+            Or paste image URL manually
+          </summary>
+          <input
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder="https://..."
+            className="mt-2 w-full px-4 py-2 rounded-xl bg-warm-50 border border-warm-200 text-charcoal placeholder:text-charcoal-light/50 focus:outline-none focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 transition-all text-sm"
+            style={{ fontFamily: "var(--font-body)" }}
+          />
+        </details>
+      </div>
     </div>
   );
 }
@@ -1166,11 +1309,149 @@ function ThemeTab() {
 // ============================================================
 // MAIN ADMIN PAGE
 // ============================================================
+// ============================================================
+// ANALYTICS TAB
+// ============================================================
+function AnalyticsTab() {
+  const { data: analytics, isLoading } = trpc.adminAnalytics.summary.useQuery();
+  const { data: projects } = trpc.adminProjects.list.useQuery();
+  const [selectedProject, setSelectedProject] = useState<number | null>(null);
+  const { data: detail } = trpc.adminAnalytics.detail.useQuery(
+    { projectId: selectedProject! },
+    { enabled: !!selectedProject }
+  );
+
+  if (isLoading) return <LoadingSpinner />;
+
+  // Build project name map
+  const projectMap: Record<number, string> = {};
+  projects?.forEach((p) => { projectMap[p.id] = p.title; });
+
+  // Total stats
+  const totalClicks = analytics?.reduce((sum, a) => sum + a.clicks, 0) || 0;
+  const totalViews = analytics?.reduce((sum, a) => sum + a.views, 0) || 0;
+
+  // Sort by most clicks
+  const sorted = [...(analytics || [])].sort((a, b) => b.clicks - a.clicks);
+
+  return (
+    <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="warm-card p-6 text-center">
+          <MousePointerClick className="w-8 h-8 text-terracotta mx-auto mb-2" />
+          <p className="text-3xl font-bold text-charcoal" style={{ fontFamily: "var(--font-display)" }}>{totalClicks}</p>
+          <p className="text-sm text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>Total Clicks</p>
+        </div>
+        <div className="warm-card p-6 text-center">
+          <Eye className="w-8 h-8 text-blue-500 mx-auto mb-2" />
+          <p className="text-3xl font-bold text-charcoal" style={{ fontFamily: "var(--font-display)" }}>{totalViews}</p>
+          <p className="text-sm text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>Total Views</p>
+        </div>
+        <div className="warm-card p-6 text-center">
+          <TrendingUp className="w-8 h-8 text-green-500 mx-auto mb-2" />
+          <p className="text-3xl font-bold text-charcoal" style={{ fontFamily: "var(--font-display)" }}>{sorted.length}</p>
+          <p className="text-sm text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>Projects Tracked</p>
+        </div>
+      </div>
+
+      {/* Per-Project Breakdown */}
+      <div className="warm-card p-6">
+        <h3 className="text-lg text-charcoal mb-4" style={{ fontFamily: "var(--font-display)" }}>Project Engagement</h3>
+        {sorted.length === 0 ? (
+          <div className="text-center py-8 text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
+            <BarChart3 className="w-10 h-10 mx-auto mb-3 text-warm-300" />
+            <p>No analytics data yet. Clicks on your project links will appear here.</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {sorted.map((item) => {
+              const maxClicks = sorted[0]?.clicks || 1;
+              const barWidth = Math.max(5, (item.clicks / maxClicks) * 100);
+              return (
+                <button
+                  key={item.projectId}
+                  onClick={() => setSelectedProject(selectedProject === item.projectId ? null : item.projectId)}
+                  className={`w-full text-left p-4 rounded-xl transition-all ${
+                    selectedProject === item.projectId
+                      ? "bg-terracotta/5 border-2 border-terracotta/30"
+                      : "bg-warm-50 border border-warm-200 hover:border-warm-300"
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-charcoal truncate" style={{ fontFamily: "var(--font-body)" }}>
+                      {projectMap[item.projectId] || `Project #${item.projectId}`}
+                    </span>
+                    <div className="flex items-center gap-3 text-xs text-charcoal-light flex-shrink-0" style={{ fontFamily: "var(--font-body)" }}>
+                      <span className="flex items-center gap-1">
+                        <MousePointerClick className="w-3 h-3" />
+                        {item.clicks}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Eye className="w-3 h-3" />
+                        {item.views}
+                      </span>
+                    </div>
+                  </div>
+                  {/* Bar chart */}
+                  <div className="h-2 rounded-full bg-warm-200 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-terracotta transition-all duration-500"
+                      style={{ width: `${barWidth}%` }}
+                    />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Detail Panel */}
+      {selectedProject && detail && (
+        <div className="warm-card p-6">
+          <h3 className="text-lg text-charcoal mb-4" style={{ fontFamily: "var(--font-display)" }}>
+            {projectMap[selectedProject] || `Project #${selectedProject}`} — Detail
+          </h3>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="bg-warm-50 rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold text-terracotta" style={{ fontFamily: "var(--font-display)" }}>{detail.totalClicks}</p>
+              <p className="text-xs text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>Clicks</p>
+            </div>
+            <div className="bg-warm-50 rounded-xl p-4 text-center">
+              <p className="text-2xl font-bold text-blue-500" style={{ fontFamily: "var(--font-display)" }}>{detail.totalViews}</p>
+              <p className="text-xs text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>Views</p>
+            </div>
+          </div>
+          {detail.events.length > 0 && (
+            <div>
+              <h4 className="text-sm font-medium text-charcoal mb-2" style={{ fontFamily: "var(--font-body)" }}>Recent Events</h4>
+              <div className="max-h-48 overflow-y-auto space-y-1">
+                {detail.events.slice(0, 20).map((event) => (
+                  <div key={event.id} className="flex items-center justify-between text-xs py-1.5 px-3 rounded-lg bg-warm-50">
+                    <span className={`font-medium ${event.eventType === 'click' ? 'text-terracotta' : 'text-blue-500'}`}>
+                      {event.eventType === 'click' ? '🖱 Click' : '👁 View'}
+                    </span>
+                    <span className="text-charcoal-light">
+                      {new Date(event.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 const tabs = [
   { id: "profile", label: "Profile", icon: User },
   { id: "projects", label: "Projects", icon: FolderOpen },
   { id: "experience", label: "Experience", icon: Briefcase },
   { id: "skills", label: "Skills", icon: Wrench },
+  { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "theme", label: "Theme", icon: Palette },
 ];
 
@@ -1272,6 +1553,7 @@ export default function Admin() {
         {activeTab === "projects" && <ProjectsTab />}
         {activeTab === "experience" && <ExperienceTab />}
         {activeTab === "skills" && <SkillsTab />}
+        {activeTab === "analytics" && <AnalyticsTab />}
         {activeTab === "theme" && <ThemeTab />}
       </div>
     </div>

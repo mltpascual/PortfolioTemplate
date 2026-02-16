@@ -32,7 +32,6 @@ export type PortfolioData = {
     featured: number;
     sortOrder: number;
     tileSize?: string;
-    displayMode?: string;
   }>;
   experiences: Array<{
     id: number;
