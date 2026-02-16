@@ -155,10 +155,23 @@ export function usePortfolio() {
   return { portfolio, isLoading: false, error };
 }
 
-// Helper to parse comma-separated tags string into array
+// Helper to parse tags — handles both JSON array format and comma-separated strings
 export function parseTags(tags: string | null): string[] {
   if (!tags) return [];
-  return tags
+  // Try JSON array format first (e.g. '["React","TypeScript"]')
+  const trimmed = tags.trim();
+  if (trimmed.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.map((t: unknown) => String(t).trim()).filter(Boolean);
+      }
+    } catch {
+      // Fall through to comma-separated parsing
+    }
+  }
+  // Comma-separated format (e.g. 'React, TypeScript')
+  return trimmed
     .split(",")
     .map((t) => t.trim())
     .filter(Boolean);

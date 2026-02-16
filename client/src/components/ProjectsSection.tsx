@@ -70,7 +70,7 @@ function ProjectImage({ imageUrl, title, fallbackIndex }: ProjectImageProps) {
         <img
           src={safeImageUrl || fallbackImage}
           alt={title}
-          className="w-full aspect-video object-cover transition-transform duration-500 group-hover:scale-105"
+          className="w-full aspect-video object-cover object-top transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
         />
       ) : (

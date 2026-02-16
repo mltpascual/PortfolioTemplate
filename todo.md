@@ -219,4 +219,8 @@
 - [x] Group Skills/Experience/Education in admin section arrangement when combined mode is selected
 - [x] Take screenshots of all 11 project URLs (site-shot.com + browser retakes for 5 failed ones)
 - [x] Upload screenshots to S3 and update project image_url + live_url in Supabase (11/11 updated)
-- [ ] Push to GitHub
+- [x] Push to GitHub
+
+## Bug Fix: Project Card Image Cropping + Tech Tags
+- [x] Fix project card image object-position to show top of screenshot (object-top instead of center)
+- [x] Fix tech tags showing brackets — parseTags now handles both JSON array and comma-separated formats
