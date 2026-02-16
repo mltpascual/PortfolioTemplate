@@ -31,6 +31,8 @@ import {
   MousePointerClick,
   Eye,
   TrendingUp,
+  LogOut,
+  ChevronDown,
 } from "lucide-react";
 import {
   DndContext,
@@ -1494,7 +1496,8 @@ const tabs = [
 ];
 
 export default function Admin() {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, loading, isAuthenticated, logout } = useAuth();
+  const [showUserMenu, setShowUserMenu] = useState(false);
   const [activeTab, setActiveTab] = useState("profile");
 
   if (loading) return <LoadingSpinner />;
@@ -1548,16 +1551,48 @@ export default function Admin() {
               Admin Dashboard
             </h1>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-charcoal-light hidden sm:block" style={{ fontFamily: "var(--font-body)" }}>
-              {user?.name || user?.email || "Admin"}
-            </span>
-            {(user as any)?.avatarUrl ? (
-              <img src={(user as any).avatarUrl} alt="" className="w-8 h-8 rounded-full" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-terracotta/10 flex items-center justify-center">
-                <User className="w-4 h-4 text-terracotta" />
-              </div>
+          <div className="relative">
+            <button
+              onClick={() => setShowUserMenu(!showUserMenu)}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-warm-100 transition-colors"
+            >
+              {(user as any)?.avatarUrl ? (
+                <img src={(user as any).avatarUrl} alt="" className="w-8 h-8 rounded-full" />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-terracotta/10 flex items-center justify-center">
+                  <User className="w-4 h-4 text-terracotta" />
+                </div>
+              )}
+              <span className="text-sm text-charcoal-light hidden sm:block" style={{ fontFamily: "var(--font-body)" }}>
+                {user?.name || user?.email || "Admin"}
+              </span>
+              <ChevronDown className={`w-4 h-4 text-charcoal-light transition-transform duration-200 ${showUserMenu ? "rotate-180" : ""}`} />
+            </button>
+            {showUserMenu && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowUserMenu(false)} />
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-lg border border-warm-200 py-1 z-50">
+                  <div className="px-4 py-2 border-b border-warm-100">
+                    <p className="text-sm font-medium text-charcoal truncate" style={{ fontFamily: "var(--font-body)" }}>
+                      {user?.name || "Admin"}
+                    </p>
+                    <p className="text-xs text-charcoal-light truncate" style={{ fontFamily: "var(--font-body)" }}>
+                      {user?.email || ""}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setShowUserMenu(false);
+                      logout();
+                    }}
+                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                    style={{ fontFamily: "var(--font-body)" }}
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Sign Out
+                  </button>
+                </div>
+              </>
             )}
           </div>
         </div>

@@ -167,3 +167,6 @@
 - [x] Add bulk tile size buttons in admin Projects tab (All Small, All Medium, All Large, All Wide)
 - [x] Add backend endpoint for bulk tile size update
 - [x] Test and verify
+
+## Phase 22: Admin Logout Dropdown
+- [x] Add logout dropdown when clicking user name in admin dashboard upper right
