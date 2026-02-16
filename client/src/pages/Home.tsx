@@ -1,6 +1,6 @@
 /*
  * DESIGN: Warm Monochrome Editorial
- * Single-page portfolio with sections: Hero, About, Skills, Projects, Experience, Contact, Footer.
+ * Single-page portfolio with sections: Hero, About, Skills, Projects, Experience, Education, Contact, Footer.
  * Warm cream background, terracotta accents, DM Serif Display + DM Sans typography.
  * Pill-shaped rounded buttons throughout.
  * 
@@ -15,6 +15,7 @@ import AboutSection from "@/components/AboutSection";
 import SkillsSection from "@/components/SkillsSection";
 import ProjectsSection from "@/components/ProjectsSection";
 import ExperienceSection from "@/components/ExperienceSection";
+import EducationSection from "@/components/EducationSection";
 import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
 import { usePortfolio } from "@/hooks/usePortfolio";
@@ -49,6 +50,7 @@ export default function Home() {
         <SkillsSection skills={portfolio.skills} />
         <ProjectsSection projects={portfolio.projects} />
         <ExperienceSection experiences={portfolio.experiences} />
+        <EducationSection education={portfolio.education} />
         <ContactSection profile={portfolio.profile} />
       </main>
       <Footer profile={portfolio.profile} />

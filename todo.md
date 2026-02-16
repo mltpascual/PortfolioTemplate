@@ -184,3 +184,12 @@
 ## Phase 26: Project Edit Modal + GitHub Deploy
 - [x] Convert project edit/create form to a modal dialog (click outside to close, Escape key)
 - [x] Push all latest changes to GitHub
+
+## Phase 27: Wider Modal, Global Modal Pattern, Education Tab
+- [x] Widen the project edit modal (more breathing room)
+- [x] Convert Experience tab edit form to modal dialog
+- [x] Convert Skills tab edit form to modal dialog
+- [x] Add Education tab to admin dashboard (CRUD for education entries)
+- [x] Add Education section to main portfolio page
+- [x] Create education table in Supabase database
+- [x] Add education backend routes and db functions

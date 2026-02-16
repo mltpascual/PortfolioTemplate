@@ -520,6 +520,115 @@ export async function deleteSkillCategory(id: number) {
 }
 
 // ==========================================
+// EDUCATION (Supabase)
+// ==========================================
+
+export interface Education {
+  id: number;
+  user_id: string;
+  institution: string;
+  degree: string;
+  field_of_study: string | null;
+  start_year: number;
+  end_year: number | null;
+  description: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+function educationToCamel(row: Education) {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    institution: row.institution,
+    degree: row.degree,
+    fieldOfStudy: row.field_of_study,
+    startYear: row.start_year,
+    endYear: row.end_year,
+    description: row.description,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function educationToSnake(data: Record<string, any>) {
+  const map: Record<string, string> = {
+    institution: "institution",
+    degree: "degree",
+    fieldOfStudy: "field_of_study",
+    startYear: "start_year",
+    endYear: "end_year",
+    description: "description",
+    sortOrder: "sort_order",
+  };
+  const result: Record<string, any> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (key === "id" || key === "userId") continue;
+    const snakeKey = map[key] || key;
+    result[snakeKey] = value;
+  }
+  result.updated_at = new Date().toISOString();
+  return result;
+}
+
+export async function getEducation() {
+  const sb = getSupabase();
+  const { data, error } = await sb
+    .from("education")
+    .select("*")
+    .order("sort_order", { ascending: true });
+
+  if (error || !data) return [];
+  return (data as Education[]).map(educationToCamel);
+}
+
+export async function getEducationById(id: number) {
+  const sb = getSupabase();
+  const { data, error } = await sb
+    .from("education")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (error || !data) return null;
+  return educationToCamel(data as Education);
+}
+
+export async function createEducation(input: Record<string, any>) {
+  const sb = getSupabaseAdmin();
+  const snakeData = educationToSnake(input);
+  if (input.userId) snakeData.user_id = input.userId;
+  const { data, error } = await sb
+    .from("education")
+    .insert(snakeData)
+    .select()
+    .single();
+  if (error) { console.error('[DB] Failed to create education:', error.message); throw new Error('Failed to create education'); }
+  return educationToCamel(data as Education);
+}
+
+export async function updateEducation(id: number, input: Record<string, any>) {
+  const sb = getSupabaseAdmin();
+  const snakeData = educationToSnake(input);
+  const { data, error } = await sb
+    .from("education")
+    .update(snakeData)
+    .eq("id", id)
+    .select()
+    .single();
+  if (error) { console.error('[DB] Failed to update education:', error.message); throw new Error('Failed to update education'); }
+  return educationToCamel(data as Education);
+}
+
+export async function deleteEducation(id: number) {
+  const sb = getSupabaseAdmin();
+  const { error } = await sb.from("education").delete().eq("id", id);
+  if (error) { console.error('[DB] Failed to delete education:', error.message); throw new Error('Failed to delete education'); }
+}
+
+// ==========================================
 // THEME SETTINGS (Supabase)
 // ==========================================
 
@@ -729,12 +838,13 @@ export async function getProjectAnalyticsDetail(projectId: number) {
 // ==========================================
 
 export async function getFullPortfolio() {
-  const [profileData, projectsData, experiencesData, skillsData] =
+  const [profileData, projectsData, experiencesData, skillsData, educationData] =
     await Promise.all([
       getProfile(),
       getProjects(),
       getExperiences(),
       getSkillCategories(),
+      getEducation(),
     ]);
 
   return {
@@ -742,5 +852,6 @@ export async function getFullPortfolio() {
     projects: projectsData,
     experiences: experiencesData,
     skills: skillsData,
+    education: educationData,
   };
 }

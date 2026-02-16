@@ -49,6 +49,16 @@ export type PortfolioData = {
     skills: string | null;
     sortOrder: number;
   }>;
+  education: Array<{
+    id: number;
+    institution: string;
+    degree: string;
+    fieldOfStudy: string | null;
+    startYear: number;
+    endYear: number | null;
+    description: string | null;
+    sortOrder: number;
+  }>;
 };
 
 // Default fallback data — only used when the API has responded but the database is empty.
@@ -104,6 +114,19 @@ const defaultSkills = [
   { id: 1, title: "Your Skills", icon: "Code2", skills: "Add your skills in the admin dashboard", sortOrder: 1 },
 ];
 
+const defaultEducation = [
+  {
+    id: 1,
+    institution: "Your University",
+    degree: "Bachelor of Science",
+    fieldOfStudy: "Computer Science",
+    startYear: 2018,
+    endYear: 2022,
+    description: "Add your education through the admin dashboard.",
+    sortOrder: 1,
+  },
+];
+
 export function usePortfolio() {
   const { data, isLoading, error } = trpc.portfolio.getAll.useQuery(undefined, {
     refetchOnWindowFocus: false,
@@ -122,6 +145,7 @@ export function usePortfolio() {
     projects: data?.projects && data.projects.length > 0 ? data.projects : defaultProjects,
     experiences: data?.experiences && data.experiences.length > 0 ? data.experiences : defaultExperiences,
     skills: data?.skills && data.skills.length > 0 ? data.skills : defaultSkills,
+    education: data?.education && data.education.length > 0 ? data.education : defaultEducation,
   };
 
   return { portfolio, isLoading: false, error };

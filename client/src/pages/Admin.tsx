@@ -33,6 +33,7 @@ import {
   TrendingUp,
   LogOut,
   ChevronDown,
+  GraduationCap,
 } from "lucide-react";
 import {
   DndContext,
@@ -323,7 +324,7 @@ function ProjectsTab() {
 
       {/* Project Edit/Create Modal */}
       <Dialog open={editing !== null} onOpenChange={(open) => { if (!open) setEditing(null); }}>
-        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto bg-cream border-warm-200">
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto bg-cream border-warm-200">
           <DialogHeader>
             <DialogTitle className="text-xl text-charcoal" style={{ fontFamily: "var(--font-display)" }}>
               {editing === "new" ? "New Project" : "Edit Project"}
@@ -509,24 +510,40 @@ function ExperienceTab() {
         </button>
       </div>
 
-      {editing !== null && (
-        <div className="warm-card p-6 space-y-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg text-charcoal" style={{ fontFamily: "var(--font-display)" }}>{editing === "new" ? "New Experience" : "Edit Experience"}</h3>
-            <button onClick={() => setEditing(null)} className="p-1.5 rounded-full hover:bg-warm-100 transition-colors"><X className="w-4 h-4 text-charcoal-light" /></button>
+      {/* Experience Edit/Create Modal */}
+      <Dialog open={editing !== null} onOpenChange={(open) => { if (!open) setEditing(null); }}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto bg-cream border-warm-200">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-charcoal" style={{ fontFamily: "var(--font-display)" }}>
+              {editing === "new" ? "New Experience" : "Edit Experience"}
+            </DialogTitle>
+            <DialogDescription className="text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
+              {editing === "new" ? "Add a new work experience entry." : "Update this experience entry."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField label="Role / Title" value={form.role} onChange={(v) => setForm({ ...form, role: v })} placeholder="Senior Software Engineer" />
+              <InputField label="Company" value={form.company} onChange={(v) => setForm({ ...form, company: v })} placeholder="Company Name" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField label="Period" value={form.period} onChange={(v) => setForm({ ...form, period: v })} placeholder="2023 — Present" />
+              <InputField label="Sort Order" value={String(form.sortOrder)} onChange={(v) => setForm({ ...form, sortOrder: parseInt(v) || 0 })} placeholder="1" />
+            </div>
+            <TextareaField label="Description" value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="What did you accomplish?" rows={3} />
+            <InputField label="Tags (comma-separated)" value={form.tags} onChange={(v) => setForm({ ...form, tags: v })} placeholder="React, TypeScript, Leadership" />
+            <div className="flex justify-end gap-3 pt-2">
+              <button onClick={() => setEditing(null)} className="px-5 py-2.5 rounded-full text-sm font-medium text-charcoal-light hover:bg-warm-100 transition-colors" style={{ fontFamily: "var(--font-body)" }}>
+                Cancel
+              </button>
+              <button onClick={handleSave} disabled={createExp.isPending || updateExp.isPending} className="pill-primary gap-2">
+                {(createExp.isPending || updateExp.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {editing === "new" ? "Create" : "Update"}
+              </button>
+            </div>
           </div>
-          <InputField label="Role / Title" value={form.role} onChange={(v) => setForm({ ...form, role: v })} placeholder="Senior Software Engineer" />
-          <InputField label="Company" value={form.company} onChange={(v) => setForm({ ...form, company: v })} placeholder="Company Name" />
-          <InputField label="Period" value={form.period} onChange={(v) => setForm({ ...form, period: v })} placeholder="2023 — Present" />
-          <TextareaField label="Description" value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="What did you accomplish?" rows={3} />
-          <InputField label="Tags (comma-separated)" value={form.tags} onChange={(v) => setForm({ ...form, tags: v })} placeholder="React, TypeScript, Leadership" />
-          <InputField label="Sort Order" value={String(form.sortOrder)} onChange={(v) => setForm({ ...form, sortOrder: parseInt(v) || 0 })} placeholder="1" />
-          <button onClick={handleSave} disabled={createExp.isPending || updateExp.isPending} className="pill-primary gap-2">
-            {(createExp.isPending || updateExp.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {editing === "new" ? "Create" : "Update"}
-          </button>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       <div className="space-y-3">
         {experiences?.map((exp) => (
@@ -606,41 +623,55 @@ function SkillsTab() {
         </button>
       </div>
 
-      {editing !== null && (
-        <div className="warm-card p-6 space-y-4">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-lg text-charcoal" style={{ fontFamily: "var(--font-display)" }}>{editing === "new" ? "New Skill Category" : "Edit Category"}</h3>
-            <button onClick={() => setEditing(null)} className="p-1.5 rounded-full hover:bg-warm-100 transition-colors"><X className="w-4 h-4 text-charcoal-light" /></button>
-          </div>
-          <InputField label="Category Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} placeholder="e.g. Frontend" />
-          <div>
-            <label className="block text-sm font-medium text-charcoal mb-2" style={{ fontFamily: "var(--font-body)" }}>Icon</label>
-            <div className="flex flex-wrap gap-2">
-              {iconOptions.map((icon) => (
-                <button
-                  key={icon}
-                  type="button"
-                  onClick={() => setForm({ ...form, icon })}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
-                    form.icon === icon
-                      ? "bg-terracotta text-white"
-                      : "bg-warm-100 text-charcoal-light border border-warm-200/60 hover:border-terracotta-light"
-                  }`}
-                  style={{ fontFamily: "var(--font-body)" }}
-                >
-                  {icon}
-                </button>
-              ))}
+      {/* Skills Edit/Create Modal */}
+      <Dialog open={editing !== null} onOpenChange={(open) => { if (!open) setEditing(null); }}>
+        <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto bg-cream border-warm-200">
+          <DialogHeader>
+            <DialogTitle className="text-xl text-charcoal" style={{ fontFamily: "var(--font-display)" }}>
+              {editing === "new" ? "New Skill Category" : "Edit Category"}
+            </DialogTitle>
+            <DialogDescription className="text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
+              {editing === "new" ? "Add a new skill category to your portfolio." : "Update this skill category."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <InputField label="Category Title" value={form.title} onChange={(v) => setForm({ ...form, title: v })} placeholder="e.g. Frontend" />
+              <InputField label="Sort Order" value={String(form.sortOrder)} onChange={(v) => setForm({ ...form, sortOrder: parseInt(v) || 0 })} placeholder="1" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-charcoal mb-2" style={{ fontFamily: "var(--font-body)" }}>Icon</label>
+              <div className="flex flex-wrap gap-2">
+                {iconOptions.map((icon) => (
+                  <button
+                    key={icon}
+                    type="button"
+                    onClick={() => setForm({ ...form, icon })}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
+                      form.icon === icon
+                        ? "bg-terracotta text-white"
+                        : "bg-warm-100 text-charcoal-light border border-warm-200/60 hover:border-terracotta-light"
+                    }`}
+                    style={{ fontFamily: "var(--font-body)" }}
+                  >
+                    {icon}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <TextareaField label="Skills (comma-separated)" value={form.skills} onChange={(v) => setForm({ ...form, skills: v })} placeholder="React, TypeScript, Next.js, Vue.js, Tailwind CSS" rows={2} />
+            <div className="flex justify-end gap-3 pt-2">
+              <button onClick={() => setEditing(null)} className="px-5 py-2.5 rounded-full text-sm font-medium text-charcoal-light hover:bg-warm-100 transition-colors" style={{ fontFamily: "var(--font-body)" }}>
+                Cancel
+              </button>
+              <button onClick={handleSave} disabled={createSkill.isPending || updateSkill.isPending} className="pill-primary gap-2">
+                {(createSkill.isPending || updateSkill.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {editing === "new" ? "Create" : "Update"}
+              </button>
             </div>
           </div>
-          <TextareaField label="Skills (comma-separated)" value={form.skills} onChange={(v) => setForm({ ...form, skills: v })} placeholder="React, TypeScript, Next.js, Vue.js, Tailwind CSS" rows={2} />
-          <InputField label="Sort Order" value={String(form.sortOrder)} onChange={(v) => setForm({ ...form, sortOrder: parseInt(v) || 0 })} placeholder="1" />
-          <button onClick={handleSave} disabled={createSkill.isPending || updateSkill.isPending} className="pill-primary gap-2">
-            {(createSkill.isPending || updateSkill.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {editing === "new" ? "Create" : "Update"}
-          </button>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
 
       <div className="space-y-3">
         {skills?.map((skill) => (
@@ -871,6 +902,157 @@ function ImageUploadField({ label, value, onChange }: { label: string; value: st
           />
         </details>
       </div>
+    </div>
+  );
+}
+
+// ============================================================
+// EDUCATION TAB
+// ============================================================
+function EducationTab() {
+  const utils = trpc.useUtils();
+  const { data: educationList, isLoading } = trpc.adminEducation.list.useQuery();
+  const [showModal, setShowModal] = useState(false);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [institution, setInstitution] = useState("");
+  const [degree, setDegree] = useState("");
+  const [fieldOfStudy, setFieldOfStudy] = useState("");
+  const [startYear, setStartYear] = useState(new Date().getFullYear());
+  const [endYear, setEndYear] = useState<number | null>(null);
+  const [description, setDescription] = useState("");
+  const [sortOrder, setSortOrder] = useState(0);
+
+  const createMutation = trpc.adminEducation.create.useMutation({
+    onSuccess: () => { utils.adminEducation.list.invalidate(); toast.success("Education added!"); resetForm(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const updateMutation = trpc.adminEducation.update.useMutation({
+    onSuccess: () => { utils.adminEducation.list.invalidate(); toast.success("Education updated!"); resetForm(); },
+    onError: (e) => toast.error(e.message),
+  });
+  const deleteMutation = trpc.adminEducation.delete.useMutation({
+    onSuccess: () => { utils.adminEducation.list.invalidate(); toast.success("Education deleted!"); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  function resetForm() {
+    setShowModal(false);
+    setEditingId(null);
+    setInstitution("");
+    setDegree("");
+    setFieldOfStudy("");
+    setStartYear(new Date().getFullYear());
+    setEndYear(null);
+    setDescription("");
+    setSortOrder(0);
+  }
+
+  function openCreate() {
+    resetForm();
+    setShowModal(true);
+  }
+
+  function openEdit(edu: any) {
+    setEditingId(edu.id);
+    setInstitution(edu.institution || "");
+    setDegree(edu.degree || "");
+    setFieldOfStudy(edu.fieldOfStudy || "");
+    setStartYear(edu.startYear || new Date().getFullYear());
+    setEndYear(edu.endYear || null);
+    setDescription(edu.description || "");
+    setSortOrder(edu.sortOrder || 0);
+    setShowModal(true);
+  }
+
+  function handleSave() {
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, institution, degree, fieldOfStudy: fieldOfStudy || undefined, startYear, endYear, description: description || undefined, sortOrder });
+    } else {
+      createMutation.mutate({ institution, degree, fieldOfStudy: fieldOfStudy || undefined, startYear, endYear, description: description || undefined, sortOrder });
+    }
+  }
+
+  const isSaving = createMutation.isPending || updateMutation.isPending;
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-terracotta" /></div>;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl text-charcoal" style={{ fontFamily: "var(--font-display)" }}>Education</h2>
+        <button onClick={openCreate} className="pill-primary-sm flex items-center gap-2"><Plus className="w-4 h-4" />Add Education</button>
+      </div>
+
+      {/* Education Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {educationList?.map((edu: any) => (
+          <div key={edu.id} className="warm-card p-5 space-y-3">
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-charcoal truncate" style={{ fontFamily: "var(--font-display)" }}>{edu.degree}</h3>
+                <p className="text-sm text-terracotta font-medium truncate" style={{ fontFamily: "var(--font-body)" }}>{edu.institution}</p>
+                {edu.fieldOfStudy && <p className="text-xs text-charcoal-light mt-0.5" style={{ fontFamily: "var(--font-body)" }}>{edu.fieldOfStudy}</p>}
+              </div>
+              <span className="text-xs text-charcoal-light whitespace-nowrap px-2 py-1 rounded-full bg-warm-100 border border-warm-200/60 ml-2">
+                {edu.startYear} — {edu.endYear || "Present"}
+              </span>
+            </div>
+            {edu.description && <p className="text-sm text-charcoal-light line-clamp-2" style={{ fontFamily: "var(--font-body)" }}>{edu.description}</p>}
+            <div className="flex gap-2 pt-1">
+              <button onClick={() => openEdit(edu)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all flex items-center gap-1">
+                <Pencil className="w-3 h-3" />Edit
+              </button>
+              <button onClick={() => { if (confirm("Delete this education entry?")) deleteMutation.mutate({ id: edu.id }); }} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-red-500 hover:border-red-300 transition-all flex items-center gap-1">
+                <Trash2 className="w-3 h-3" />Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {(!educationList || educationList.length === 0) && (
+        <div className="text-center py-12 text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
+          <GraduationCap className="w-12 h-12 mx-auto mb-3 opacity-30" />
+          <p>No education entries yet. Click "Add Education" to get started.</p>
+        </div>
+      )}
+
+      {/* Education Modal */}
+      {showModal && (
+        <Dialog open={showModal} onOpenChange={(open) => { if (!open) resetForm(); }}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto bg-cream border-warm-200">
+            <DialogHeader>
+              <DialogTitle className="text-xl text-charcoal" style={{ fontFamily: "var(--font-display)" }}>
+                {editingId ? "Edit Education" : "Add Education"}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
+              <InputField label="Institution" value={institution} onChange={setInstitution} placeholder="e.g. MIT, Stanford University" />
+              <InputField label="Degree" value={degree} onChange={setDegree} placeholder="e.g. Bachelor of Science, Master of Arts" />
+              <InputField label="Field of Study" value={fieldOfStudy} onChange={setFieldOfStudy} placeholder="e.g. Computer Science, Business Administration" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1.5" style={{ fontFamily: "var(--font-body)" }}>Start Year</label>
+                  <input type="number" value={startYear} onChange={(e) => setStartYear(parseInt(e.target.value) || 2020)} min={1950} max={2100} className="w-full px-4 py-2.5 rounded-xl border border-warm-200 bg-white/80 text-charcoal focus:ring-2 focus:ring-terracotta/20 focus:border-terracotta outline-none transition-all" style={{ fontFamily: "var(--font-body)" }} />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-charcoal mb-1.5" style={{ fontFamily: "var(--font-body)" }}>End Year (leave empty for "Present")</label>
+                  <input type="number" value={endYear ?? ""} onChange={(e) => setEndYear(e.target.value ? parseInt(e.target.value) : null)} min={1950} max={2100} placeholder="Present" className="w-full px-4 py-2.5 rounded-xl border border-warm-200 bg-white/80 text-charcoal focus:ring-2 focus:ring-terracotta/20 focus:border-terracotta outline-none transition-all" style={{ fontFamily: "var(--font-body)" }} />
+                </div>
+              </div>
+              <TextareaField label="Description" value={description} onChange={setDescription} placeholder="Describe your studies, achievements, activities..." />
+              <InputField label="Sort Order" value={String(sortOrder)} onChange={(v) => setSortOrder(parseInt(v) || 0)} placeholder="0" />
+              <div className="flex gap-3 pt-2">
+                <button onClick={handleSave} disabled={isSaving || !institution || !degree} className="pill-primary-sm flex items-center gap-2 disabled:opacity-50">
+                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  {editingId ? "Update" : "Create"}
+                </button>
+                <button onClick={resetForm} className="pill-outline-sm">Cancel</button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
@@ -1502,6 +1684,7 @@ const tabs = [
   { id: "projects", label: "Projects", icon: FolderOpen },
   { id: "experience", label: "Experience", icon: Briefcase },
   { id: "skills", label: "Skills", icon: Wrench },
+  { id: "education", label: "Education", icon: GraduationCap },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "theme", label: "Theme", icon: Palette },
 ];
@@ -1637,6 +1820,7 @@ export default function Admin() {
         {activeTab === "projects" && <ProjectsTab />}
         {activeTab === "experience" && <ExperienceTab />}
         {activeTab === "skills" && <SkillsTab />}
+        {activeTab === "education" && <EducationTab />}
         {activeTab === "analytics" && <AnalyticsTab />}
         {activeTab === "theme" && <ThemeTab />}
       </div>

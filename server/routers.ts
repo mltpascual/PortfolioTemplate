@@ -294,6 +294,53 @@ export const appRouter = router({
   }),
 
   // ==========================================
+  // ADMIN: Education management
+  // ==========================================
+  adminEducation: router({
+    list: adminProcedure.query(async () => {
+      return db.getEducation();
+    }),
+    create: adminProcedure
+      .input(
+        z.object({
+          institution: requiredText(300),
+          degree: requiredText(300),
+          fieldOfStudy: safeText(300),
+          startYear: z.number().int().min(1950).max(2100),
+          endYear: z.number().int().min(1950).max(2100).optional().nullable(),
+          description: safeText(5000),
+          sortOrder: z.number().min(0).max(9999).optional(),
+        })
+      )
+      .mutation(async ({ input, ctx }) => {
+        return db.createEducation({ ...input, userId: ctx.user?.openId || 'admin' });
+      }),
+    update: adminProcedure
+      .input(
+        z.object({
+          id: z.number().int().positive(),
+          institution: safeText(300),
+          degree: safeText(300),
+          fieldOfStudy: safeText(300),
+          startYear: z.number().int().min(1950).max(2100).optional(),
+          endYear: z.number().int().min(1950).max(2100).optional().nullable(),
+          description: safeText(5000),
+          sortOrder: z.number().min(0).max(9999).optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { id, ...data } = input;
+        return db.updateEducation(id, data);
+      }),
+    delete: adminProcedure
+      .input(z.object({ id: z.number().int().positive() }))
+      .mutation(async ({ input }) => {
+        await db.deleteEducation(input.id);
+        return { success: true };
+      }),
+  }),
+
+  // ==========================================
   // ADMIN: Skills management
   // ==========================================
   adminSkills: router({
