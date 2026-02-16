@@ -1,11 +1,13 @@
 /*
  * DESIGN: Warm Monochrome Editorial
  * Split layout: text left, form right.
+ * Contact form sends messages via the backend notifyOwner API.
  */
 
 import { useEffect, useRef, useState } from "react";
-import { Send, MapPin, Mail, Phone } from "lucide-react";
+import { Send, MapPin, Mail, Phone, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 import type { PortfolioData } from "@/hooks/usePortfolio";
 
 interface ContactSectionProps {
@@ -15,6 +17,10 @@ interface ContactSectionProps {
 export default function ContactSection({ profile }: ContactSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
+  const [name, setName] = useState("");
+  const [emailInput, setEmailInput] = useState("");
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -27,9 +33,38 @@ export default function ContactSection({ profile }: ContactSectionProps) {
     return () => observer.disconnect();
   }, []);
 
+  const contactMutation = trpc.system.notifyOwner.useMutation({
+    onSuccess: () => {
+      toast.success("Message sent! I'll get back to you soon.");
+      setName("");
+      setEmailInput("");
+      setSubject("");
+      setMessage("");
+    },
+    onError: () => {
+      toast.error("Failed to send message. Please try again or email me directly.");
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Message sent! I'll get back to you soon.");
+
+    // Basic client-side validation
+    if (!name.trim() || !emailInput.trim() || !message.trim()) {
+      toast.error("Please fill in all required fields.");
+      return;
+    }
+
+    // Simple email format check
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+
+    contactMutation.mutate({
+      title: `Portfolio Contact: ${subject || "New Message"}`,
+      content: `From: ${name.trim()} <${emailInput.trim()}>\nSubject: ${subject.trim() || "N/A"}\n\n${message.trim()}`,
+    });
   };
 
   const email = profile?.email || "alex@example.com";
@@ -138,24 +173,32 @@ export default function ContactSection({ profile }: ContactSectionProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-5">
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-charcoal mb-2" style={{ fontFamily: "var(--font-body)" }}>
-                    Name
+                    Name <span className="text-terracotta">*</span>
                   </label>
                   <input
                     type="text"
                     id="name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     placeholder="Your name"
+                    required
+                    maxLength={200}
                     className="w-full px-5 py-3 rounded-full bg-warm-50 border border-warm-200 text-charcoal placeholder:text-charcoal-light/50 focus:outline-none focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 transition-all text-sm"
                     style={{ fontFamily: "var(--font-body)" }}
                   />
                 </div>
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-charcoal mb-2" style={{ fontFamily: "var(--font-body)" }}>
-                    Email
+                  <label htmlFor="contact-email" className="block text-sm font-medium text-charcoal mb-2" style={{ fontFamily: "var(--font-body)" }}>
+                    Email <span className="text-terracotta">*</span>
                   </label>
                   <input
                     type="email"
-                    id="email"
+                    id="contact-email"
+                    value={emailInput}
+                    onChange={(e) => setEmailInput(e.target.value)}
                     placeholder="your@email.com"
+                    required
+                    maxLength={320}
                     className="w-full px-5 py-3 rounded-full bg-warm-50 border border-warm-200 text-charcoal placeholder:text-charcoal-light/50 focus:outline-none focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 transition-all text-sm"
                     style={{ fontFamily: "var(--font-body)" }}
                   />
@@ -169,7 +212,10 @@ export default function ContactSection({ profile }: ContactSectionProps) {
                 <input
                   type="text"
                   id="subject"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
                   placeholder="What's this about?"
+                  maxLength={300}
                   className="w-full px-5 py-3 rounded-full bg-warm-50 border border-warm-200 text-charcoal placeholder:text-charcoal-light/50 focus:outline-none focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 transition-all text-sm"
                   style={{ fontFamily: "var(--font-body)" }}
                 />
@@ -177,20 +223,37 @@ export default function ContactSection({ profile }: ContactSectionProps) {
 
               <div className="mb-8">
                 <label htmlFor="message" className="block text-sm font-medium text-charcoal mb-2" style={{ fontFamily: "var(--font-body)" }}>
-                  Message
+                  Message <span className="text-terracotta">*</span>
                 </label>
                 <textarea
                   id="message"
                   rows={5}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
                   placeholder="Tell me about your project..."
+                  required
+                  maxLength={5000}
                   className="w-full px-5 py-4 rounded-2xl bg-warm-50 border border-warm-200 text-charcoal placeholder:text-charcoal-light/50 focus:outline-none focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 transition-all text-sm resize-none"
                   style={{ fontFamily: "var(--font-body)" }}
                 />
               </div>
 
-              <button type="submit" className="pill-primary gap-2">
-                Send Message
-                <Send className="w-4 h-4" />
+              <button
+                type="submit"
+                disabled={contactMutation.isPending}
+                className="pill-primary gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {contactMutation.isPending ? (
+                  <>
+                    Sending...
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  </>
+                ) : (
+                  <>
+                    Send Message
+                    <Send className="w-4 h-4" />
+                  </>
+                )}
               </button>
             </form>
           </div>

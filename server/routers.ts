@@ -5,6 +5,48 @@ import { publicProcedure, protectedProcedure, adminProcedure, router } from "./_
 import { z } from "zod";
 import * as db from "./db";
 
+// ==========================================
+// INPUT VALIDATION HELPERS
+// ==========================================
+
+/** Safe URL validator: only allows http(s):// URLs (blocks javascript:, data:, etc.) */
+const safeUrl = z
+  .string()
+  .refine(
+    (val) => {
+      if (!val) return true; // empty is OK (optional fields)
+      try {
+        const url = new URL(val);
+        return url.protocol === "https:" || url.protocol === "http:";
+      } catch {
+        return false;
+      }
+    },
+    { message: "Must be a valid HTTP(S) URL" }
+  )
+  .optional();
+
+/** Allowed heading fonts (validated server-side to prevent CSS injection) */
+const ALLOWED_HEADING_FONTS = [
+  "DM Serif Display", "Playfair Display", "Lora", "Merriweather",
+  "Cormorant Garamond", "Libre Baskerville", "EB Garamond", "Crimson Text",
+  "Bitter", "Josefin Sans", "Montserrat", "Raleway", "Poppins", "Inter", "Space Grotesk",
+] as const;
+
+/** Allowed body fonts (validated server-side to prevent CSS injection) */
+const ALLOWED_BODY_FONTS = [
+  "DM Sans", "Inter", "Poppins", "Nunito", "Open Sans", "Lato",
+  "Source Sans 3", "Roboto", "Work Sans", "Outfit", "Plus Jakarta Sans",
+  "Manrope", "Figtree", "Geist", "IBM Plex Sans",
+] as const;
+
+/** Hex color validator */
+const hexColor = z.string().regex(/^#[0-9a-fA-F]{6}$/, "Must be a valid hex color (e.g. #B85C38)").optional();
+
+/** Safe text validator: limits length to prevent abuse */
+const safeText = (maxLen: number) => z.string().max(maxLen).optional();
+const requiredText = (maxLen: number) => z.string().min(1).max(maxLen);
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -44,10 +86,10 @@ export const appRouter = router({
     update: adminProcedure
       .input(
         z.object({
-          accentColor: z.string().optional(),
-          accentColorHover: z.string().optional(),
-          headingFont: z.string().optional(),
-          bodyFont: z.string().optional(),
+          accentColor: hexColor,
+          accentColorHover: hexColor,
+          headingFont: z.enum(ALLOWED_HEADING_FONTS).optional(),
+          bodyFont: z.enum(ALLOWED_BODY_FONTS).optional(),
           darkMode: z.boolean().optional(),
         })
       )
@@ -69,24 +111,24 @@ export const appRouter = router({
     update: adminProcedure
       .input(
         z.object({
-          fullName: z.string().optional(),
-          title: z.string().optional(),
-          bio: z.string().optional(),
-          heroTagline: z.string().optional(),
-          heroSubtitle: z.string().optional(),
-          avatarUrl: z.string().optional(),
-          resumeUrl: z.string().optional(),
-          githubUrl: z.string().optional(),
-          linkedinUrl: z.string().optional(),
-          twitterUrl: z.string().optional(),
-          email: z.string().optional(),
-          phone: z.string().optional(),
-          location: z.string().optional(),
-          yearsExperience: z.string().optional(),
-          projectsDelivered: z.string().optional(),
-          openSourceContributions: z.string().optional(),
-          clientSatisfaction: z.string().optional(),
-          availableForWork: z.number().optional(),
+          fullName: safeText(200),
+          title: safeText(300),
+          bio: safeText(5000),
+          heroTagline: safeText(500),
+          heroSubtitle: safeText(2000),
+          avatarUrl: safeUrl,
+          resumeUrl: safeUrl,
+          githubUrl: safeUrl,
+          linkedinUrl: safeUrl,
+          twitterUrl: safeUrl,
+          email: z.string().email().max(320).optional().or(z.literal("")),
+          phone: safeText(50),
+          location: safeText(200),
+          yearsExperience: safeText(20),
+          projectsDelivered: safeText(20),
+          openSourceContributions: safeText(20),
+          clientSatisfaction: safeText(20),
+          availableForWork: z.number().min(0).max(1).optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -104,14 +146,15 @@ export const appRouter = router({
     create: adminProcedure
       .input(
         z.object({
-          title: z.string(),
-          description: z.string().optional(),
-          imageUrl: z.string().optional(),
-          liveUrl: z.string().optional(),
-          githubUrl: z.string().optional(),
-          tags: z.string().optional(),
-          featured: z.number().optional(),
-          sortOrder: z.number().optional(),
+          title: requiredText(300),
+          description: safeText(5000),
+          imageUrl: safeUrl,
+          liveUrl: safeUrl,
+          githubUrl: safeUrl,
+          tags: safeText(1000),
+          featured: z.number().min(0).max(1).optional(),
+          tileSize: z.enum(["small", "medium", "large", "wide"]).optional(),
+          sortOrder: z.number().min(0).max(9999).optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -120,15 +163,16 @@ export const appRouter = router({
     update: adminProcedure
       .input(
         z.object({
-          id: z.number(),
-          title: z.string().optional(),
-          description: z.string().optional(),
-          imageUrl: z.string().optional(),
-          liveUrl: z.string().optional(),
-          githubUrl: z.string().optional(),
-          tags: z.string().optional(),
-          featured: z.number().optional(),
-          sortOrder: z.number().optional(),
+          id: z.number().int().positive(),
+          title: safeText(300),
+          description: safeText(5000),
+          imageUrl: safeUrl,
+          liveUrl: safeUrl,
+          githubUrl: safeUrl,
+          tags: safeText(1000),
+          featured: z.number().min(0).max(1).optional(),
+          tileSize: z.enum(["small", "medium", "large", "wide"]).optional(),
+          sortOrder: z.number().min(0).max(9999).optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -136,7 +180,7 @@ export const appRouter = router({
         return db.updateProject(id, data);
       }),
     delete: adminProcedure
-      .input(z.object({ id: z.number() }))
+      .input(z.object({ id: z.number().int().positive() }))
       .mutation(async ({ input }) => {
         await db.deleteProject(input.id);
         return { success: true };
@@ -153,12 +197,12 @@ export const appRouter = router({
     create: adminProcedure
       .input(
         z.object({
-          role: z.string(),
-          company: z.string(),
-          period: z.string(),
-          description: z.string().optional(),
-          tags: z.string().optional(),
-          sortOrder: z.number().optional(),
+          role: requiredText(300),
+          company: requiredText(300),
+          period: requiredText(100),
+          description: safeText(5000),
+          tags: safeText(1000),
+          sortOrder: z.number().min(0).max(9999).optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -167,13 +211,13 @@ export const appRouter = router({
     update: adminProcedure
       .input(
         z.object({
-          id: z.number(),
-          role: z.string().optional(),
-          company: z.string().optional(),
-          period: z.string().optional(),
-          description: z.string().optional(),
-          tags: z.string().optional(),
-          sortOrder: z.number().optional(),
+          id: z.number().int().positive(),
+          role: safeText(300),
+          company: safeText(300),
+          period: safeText(100),
+          description: safeText(5000),
+          tags: safeText(1000),
+          sortOrder: z.number().min(0).max(9999).optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -181,7 +225,7 @@ export const appRouter = router({
         return db.updateExperience(id, data);
       }),
     delete: adminProcedure
-      .input(z.object({ id: z.number() }))
+      .input(z.object({ id: z.number().int().positive() }))
       .mutation(async ({ input }) => {
         await db.deleteExperience(input.id);
         return { success: true };
@@ -198,10 +242,10 @@ export const appRouter = router({
     create: adminProcedure
       .input(
         z.object({
-          title: z.string(),
-          icon: z.string().optional(),
-          skills: z.string().optional(),
-          sortOrder: z.number().optional(),
+          title: requiredText(200),
+          icon: safeText(50),
+          skills: safeText(2000),
+          sortOrder: z.number().min(0).max(9999).optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -210,11 +254,11 @@ export const appRouter = router({
     update: adminProcedure
       .input(
         z.object({
-          id: z.number(),
-          title: z.string().optional(),
-          icon: z.string().optional(),
-          skills: z.string().optional(),
-          sortOrder: z.number().optional(),
+          id: z.number().int().positive(),
+          title: safeText(200),
+          icon: safeText(50),
+          skills: safeText(2000),
+          sortOrder: z.number().min(0).max(9999).optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -222,7 +266,7 @@ export const appRouter = router({
         return db.updateSkillCategory(id, data);
       }),
     delete: adminProcedure
-      .input(z.object({ id: z.number() }))
+      .input(z.object({ id: z.number().int().positive() }))
       .mutation(async ({ input }) => {
         await db.deleteSkillCategory(input.id);
         return { success: true };

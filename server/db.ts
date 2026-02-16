@@ -71,6 +71,7 @@ export interface Project {
   tags: string | null;
   featured: boolean;
   display_mode: string;
+  tile_size: string;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -139,6 +140,7 @@ function projectToCamel(row: Project) {
     tags: row.tags,
     featured: row.featured ? 1 : 0,
     displayMode: row.display_mode || 'live',
+    tileSize: row.tile_size || 'medium',
     sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -220,6 +222,7 @@ function projectToSnake(data: Record<string, any>) {
     tags: "tags",
     featured: "featured",
     displayMode: "display_mode",
+    tileSize: "tile_size",
     sortOrder: "sort_order",
   };
   const result: Record<string, any> = {};
@@ -300,7 +303,7 @@ export async function upsertProfile(input: Record<string, any>) {
       .eq("id", existing.id)
       .select()
       .single();
-    if (error) throw new Error(`Failed to update profile: ${error.message}`);
+    if (error) { console.error('[DB] Failed to update profile:', error.message); throw new Error('Failed to update profile'); }
     return profileToCamel(data as Profile);
   } else {
     const { data, error } = await sb
@@ -308,7 +311,7 @@ export async function upsertProfile(input: Record<string, any>) {
       .insert(snakeData)
       .select()
       .single();
-    if (error) throw new Error(`Failed to create profile: ${error.message}`);
+    if (error) { console.error('[DB] Failed to create profile:', error.message); throw new Error('Failed to create profile'); }
     return profileToCamel(data as Profile);
   }
 }
@@ -348,7 +351,7 @@ export async function createProject(input: Record<string, any>) {
     .insert(snakeData)
     .select()
     .single();
-  if (error) throw new Error(`Failed to create project: ${error.message}`);
+  if (error) { console.error('[DB] Failed to create project:', error.message); throw new Error('Failed to create project'); }
   return projectToCamel(data as Project);
 }
 
@@ -361,14 +364,14 @@ export async function updateProject(id: number, input: Record<string, any>) {
     .eq("id", id)
     .select()
     .single();
-  if (error) throw new Error(`Failed to update project: ${error.message}`);
+  if (error) { console.error('[DB] Failed to update project:', error.message); throw new Error('Failed to update project'); }
   return projectToCamel(data as Project);
 }
 
 export async function deleteProject(id: number) {
   const sb = getSupabaseAdmin();
   const { error } = await sb.from("projects").delete().eq("id", id);
-  if (error) throw new Error(`Failed to delete project: ${error.message}`);
+  if (error) { console.error('[DB] Failed to delete project:', error.message); throw new Error('Failed to delete project'); }
 }
 
 // ==========================================
@@ -406,7 +409,7 @@ export async function createExperience(input: Record<string, any>) {
     .insert(snakeData)
     .select()
     .single();
-  if (error) throw new Error(`Failed to create experience: ${error.message}`);
+  if (error) { console.error('[DB] Failed to create experience:', error.message); throw new Error('Failed to create experience'); }
   return experienceToCamel(data as Experience);
 }
 
@@ -422,14 +425,14 @@ export async function updateExperience(
     .eq("id", id)
     .select()
     .single();
-  if (error) throw new Error(`Failed to update experience: ${error.message}`);
+  if (error) { console.error('[DB] Failed to update experience:', error.message); throw new Error('Failed to update experience'); }
   return experienceToCamel(data as Experience);
 }
 
 export async function deleteExperience(id: number) {
   const sb = getSupabaseAdmin();
   const { error } = await sb.from("experiences").delete().eq("id", id);
-  if (error) throw new Error(`Failed to delete experience: ${error.message}`);
+  if (error) { console.error('[DB] Failed to delete experience:', error.message); throw new Error('Failed to delete experience'); }
 }
 
 // ==========================================
@@ -467,8 +470,7 @@ export async function createSkillCategory(input: Record<string, any>) {
     .insert(snakeData)
     .select()
     .single();
-  if (error)
-    throw new Error(`Failed to create skill category: ${error.message}`);
+  if (error) { console.error('[DB] Failed to create skill category:', error.message); throw new Error('Failed to create skill category'); }
   return skillCategoryToCamel(data as SkillCategory);
 }
 
@@ -484,16 +486,14 @@ export async function updateSkillCategory(
     .eq("id", id)
     .select()
     .single();
-  if (error)
-    throw new Error(`Failed to update skill category: ${error.message}`);
+  if (error) { console.error('[DB] Failed to update skill category:', error.message); throw new Error('Failed to update skill category'); }
   return skillCategoryToCamel(data as SkillCategory);
 }
 
 export async function deleteSkillCategory(id: number) {
   const sb = getSupabaseAdmin();
   const { error } = await sb.from("skill_categories").delete().eq("id", id);
-  if (error)
-    throw new Error(`Failed to delete skill category: ${error.message}`);
+  if (error) { console.error('[DB] Failed to delete skill category:', error.message); throw new Error('Failed to delete skill category'); }
 }
 
 // ==========================================
@@ -587,7 +587,7 @@ export async function updateThemeSettings(input: {
       })
       .select()
       .single();
-    if (error) throw new Error(`Failed to create theme settings: ${error.message}`);
+    if (error) { console.error('[DB] Failed to create theme settings:', error.message); throw new Error('Failed to create theme settings'); }
     return themeSettingsToCamel(data as ThemeSettings);
   } else {
     const { data, error } = await sb
@@ -596,7 +596,7 @@ export async function updateThemeSettings(input: {
       .eq('id', existing.id)
       .select()
       .single();
-    if (error) throw new Error(`Failed to update theme settings: ${error.message}`);
+    if (error) { console.error('[DB] Failed to update theme settings:', error.message); throw new Error('Failed to update theme settings'); }
     return themeSettingsToCamel(data as ThemeSettings);
   }
 }

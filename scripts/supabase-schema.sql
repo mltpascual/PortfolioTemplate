@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS projects (
   github_url VARCHAR(500) DEFAULT '',
   tags TEXT,
   featured BOOLEAN DEFAULT false,
+  display_mode VARCHAR(20) DEFAULT 'live',
+  tile_size VARCHAR(20) DEFAULT 'medium',
   sort_order INT DEFAULT 0,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()

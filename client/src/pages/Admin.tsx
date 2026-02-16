@@ -204,6 +204,7 @@ function ProjectsTab() {
     tags: "",
     featured: 0,
     displayMode: "live" as string,
+    tileSize: "medium" as string,
     sortOrder: 0,
   });
 
@@ -218,20 +219,22 @@ function ProjectsTab() {
       tags: project.tags || "",
       featured: project.featured || 0,
       displayMode: project.displayMode || "live",
+      tileSize: project.tileSize || "medium",
       sortOrder: project.sortOrder || 0,
     });
   };
 
   const startNew = () => {
     setEditing("new");
-    setForm({ title: "", description: "", imageUrl: "", liveUrl: "", githubUrl: "", tags: "", featured: 0, displayMode: "live", sortOrder: (projects?.length || 0) + 1 });
+    setForm({ title: "", description: "", imageUrl: "", liveUrl: "", githubUrl: "", tags: "", featured: 0, displayMode: "live", tileSize: "medium", sortOrder: (projects?.length || 0) + 1 });
   };
 
   const handleSave = () => {
+    const payload = { ...form, tileSize: form.tileSize as any };
     if (editing === "new") {
-      createProject.mutate(form);
+      createProject.mutate(payload);
     } else if (typeof editing === "number") {
-      updateProject.mutate({ id: editing, ...form });
+      updateProject.mutate({ id: editing, ...payload });
     }
   };
 
@@ -267,7 +270,7 @@ function ProjectsTab() {
             <InputField label="GitHub URL" value={form.githubUrl} onChange={(v) => setForm({ ...form, githubUrl: v })} placeholder="https://..." />
           </div>
           <InputField label="Tags (comma-separated)" value={form.tags} onChange={(v) => setForm({ ...form, tags: v })} placeholder="React, TypeScript, Node.js" />
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <InputField label="Sort Order" value={String(form.sortOrder)} onChange={(v) => setForm({ ...form, sortOrder: parseInt(v) || 0 })} placeholder="1" />
             <div className="flex items-center gap-3 pt-6">
               <label className="text-sm font-medium text-charcoal" style={{ fontFamily: "var(--font-body)" }}>Featured</label>
@@ -298,6 +301,28 @@ function ProjectsTab() {
                 </button>
               </div>
             </div>
+            <div className="pt-0 md:pt-0">
+              <label className="block text-sm font-medium text-charcoal mb-2" style={{ fontFamily: "var(--font-body)" }}>Tile Size</label>
+              <div className="flex flex-wrap gap-1.5">
+                {(["small", "medium", "large", "wide"] as const).map((size) => (
+                  <button
+                    key={size}
+                    type="button"
+                    onClick={() => setForm({ ...form, tileSize: size })}
+                    className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors capitalize ${
+                      form.tileSize === size
+                        ? "bg-terracotta text-white"
+                        : "bg-warm-50 text-charcoal-light border border-warm-200 hover:bg-warm-100"
+                    }`}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+              <p className="text-[10px] text-charcoal-light/60 mt-1" style={{ fontFamily: "var(--font-body)" }}>
+                Controls card size in the grid layout
+              </p>
+            </div>
           </div>
           <button onClick={handleSave} disabled={createProject.isPending || updateProject.isPending} className="pill-primary gap-2">
             {(createProject.isPending || updateProject.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -323,6 +348,9 @@ function ProjectsTab() {
                   project.displayMode === "image" ? "bg-warm-200/60 text-charcoal-light" : "bg-green-100 text-green-700"
                 }`}>
                   {project.displayMode === "image" ? "Image" : "Live"}
+                </span>
+                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-50 text-blue-600 capitalize">
+                  {(project as any).tileSize || "medium"}
                 </span>
               </div>
               <p className="text-sm text-charcoal-light truncate" style={{ fontFamily: "var(--font-body)" }}>
@@ -696,7 +724,13 @@ function ThemeTab() {
   };
 
   const handleSave = () => {
-    updateMutation.mutate({ accentColor, accentColorHover, headingFont, bodyFont, darkMode });
+    updateMutation.mutate({
+      accentColor,
+      accentColorHover,
+      headingFont: headingFont as any,
+      bodyFont: bodyFont as any,
+      darkMode,
+    });
   };
 
   const handleReset = () => {

@@ -93,7 +93,7 @@ class SDKServer {
     options: { expiresInMs?: number; name?: string } = {}
   ): Promise<string> {
     const issuedAt = Date.now();
-    const expiresInMs = options.expiresInMs ?? 365 * 24 * 60 * 60 * 1000;
+    const expiresInMs = options.expiresInMs ?? 30 * 24 * 60 * 60 * 1000; // 30 days default
     const expirationSeconds = Math.floor((issuedAt + expiresInMs) / 1000);
     const secretKey = this.getSessionSecret();
 

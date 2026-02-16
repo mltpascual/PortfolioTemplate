@@ -4,7 +4,23 @@ import { getSessionCookieOptions } from "./cookies";
 import { sdk } from "./sdk";
 import axios from "axios";
 
-const ONE_YEAR_MS = 365 * 24 * 60 * 60 * 1000;
+const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days (was 1 year)
+
+/**
+ * Validate that a return path is safe (relative, no protocol-relative URLs).
+ * Prevents open redirect attacks.
+ */
+function sanitizeReturnPath(path: string): string {
+  if (!path || typeof path !== "string") return "/";
+  // Must start with / and not be protocol-relative (//)
+  if (!path.startsWith("/") || path.startsWith("//")) return "/";
+  // Block javascript: and data: schemes that could appear after decoding
+  const decoded = decodeURIComponent(path).toLowerCase();
+  if (decoded.includes("javascript:") || decoded.includes("data:")) return "/";
+  // Block backslash-based bypasses (\\evil.com)
+  if (path.includes("\\")) return "/";
+  return path;
+}
 
 function getGitHubClientId(): string {
   return process.env.GITHUB_CLIENT_ID || "";
@@ -28,8 +44,8 @@ export function registerOAuthRoutes(app: Express) {
     const host = req.headers["x-forwarded-host"] || req.headers.host;
     const callbackUrl = `${protocol}://${host}/api/auth/github/callback`;
 
-    // Store the return path in state
-    const returnPath = (req.query.returnPath as string) || "/";
+    // Store the return path in state (sanitized to prevent open redirect)
+    const returnPath = sanitizeReturnPath((req.query.returnPath as string) || "/");
     const state = Buffer.from(JSON.stringify({ returnPath, callbackUrl })).toString("base64url");
 
     const githubAuthUrl = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${encodeURIComponent(callbackUrl)}&scope=read:user%20user:email&state=${state}`;
@@ -51,10 +67,10 @@ export function registerOAuthRoutes(app: Express) {
     try {
       if (state) {
         const decoded = JSON.parse(Buffer.from(state, "base64url").toString());
-        returnPath = decoded.returnPath || "/";
+        returnPath = sanitizeReturnPath(decoded.returnPath || "/");
       }
     } catch {
-      // ignore state parse errors
+      // ignore state parse errors — default to safe "/"
     }
 
     try {
@@ -107,12 +123,12 @@ export function registerOAuthRoutes(app: Express) {
       // Create session token
       const sessionToken = await sdk.createSessionToken(String(githubUser.id), {
         name: user.name || githubUser.login,
-        expiresInMs: ONE_YEAR_MS,
+        expiresInMs: SESSION_MAX_AGE_MS,
       });
 
       // Set cookie and redirect
       const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: SESSION_MAX_AGE_MS });
 
       res.redirect(302, returnPath);
     } catch (error: any) {
