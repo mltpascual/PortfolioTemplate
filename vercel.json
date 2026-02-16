@@ -4,12 +4,6 @@
   "installCommand": "pnpm install",
   "framework": null,
   "outputDirectory": "dist/public",
-  "functions": {
-    "api/index.mjs": {
-      "maxDuration": 30,
-      "includeFiles": "api/**"
-    }
-  },
   "rewrites": [
     { "source": "/api/(.*)", "destination": "/api/index.mjs" },
     { "source": "/((?!assets/).*)", "destination": "/index.html" }
