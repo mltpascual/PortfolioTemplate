@@ -60,3 +60,15 @@
 - [x] Ran ANALYZE on all 4 tables to update query planner statistics
 - [x] All 15 tests still passing after performance optimizations
 - [x] Explain login/authentication system to user
+
+## Phase 10: Replace Manus OAuth with GitHub OAuth (Self-Hostable)
+- [x] Analyzed current Manus OAuth flow (sdk.ts, oauth.ts, context.ts)
+- [x] Created GitHub OAuth App on GitHub (Client ID: Ov23liGVPdDWXOMVPCmV)
+- [x] Implemented GitHub OAuth callback (/api/auth/github + /api/auth/github/callback)
+- [x] JWT session management with jose (createSessionToken, verifySession)
+- [x] Updated client login flow — getLoginUrl() now points to /api/auth/github
+- [x] Admin auth uses GITHUB_OWNER_USERNAME to auto-assign admin role
+- [x] Users table moved to Supabase (app_users) — no more Drizzle/MySQL for users
+- [x] Set GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GITHUB_OWNER_USERNAME env vars
+- [x] All 19 tests passing (auth + supabase + service_role + github-oauth + portfolio CRUD)
+- [ ] Update README with self-hosting instructions
