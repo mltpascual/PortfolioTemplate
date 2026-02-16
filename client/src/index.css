@@ -40,26 +40,26 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  /* Warm editorial palette */
-  --color-warm-50: oklch(0.98 0.005 70);
-  --color-warm-100: oklch(0.96 0.01 65);
-  --color-warm-200: oklch(0.92 0.015 60);
-  --color-warm-300: oklch(0.85 0.03 55);
-  --color-warm-400: oklch(0.72 0.06 50);
+  /* Warm editorial palette - references --t-* tokens from :root for dark mode override */
+  --color-warm-50: var(--t-warm-50);
+  --color-warm-100: var(--t-warm-100);
+  --color-warm-200: var(--t-warm-200);
+  --color-warm-300: var(--t-warm-300);
+  --color-warm-400: var(--t-warm-400);
   --color-warm-500: oklch(0.60 0.12 40);
   --color-warm-600: oklch(0.52 0.14 35);
   --color-warm-700: oklch(0.42 0.10 40);
   --color-warm-800: oklch(0.32 0.06 45);
   --color-warm-900: oklch(0.22 0.03 50);
-  --color-terracotta: oklch(0.58 0.15 35);
-  --color-terracotta-light: oklch(0.68 0.12 38);
-  --color-terracotta-dark: oklch(0.48 0.16 32);
-  --color-cream: oklch(0.97 0.008 80);
-  --color-ivory: oklch(0.98 0.005 85);
-  --color-charcoal: oklch(0.25 0.01 60);
-  --color-charcoal-light: oklch(0.40 0.01 60);
-  --font-display: 'DM Serif Display', Georgia, serif;
-  --font-body: 'DM Sans', system-ui, sans-serif;
+  --color-terracotta: var(--t-terracotta);
+  --color-terracotta-light: var(--t-terracotta-light);
+  --color-terracotta-dark: var(--t-terracotta-dark);
+  --color-cream: var(--t-cream);
+  --color-ivory: var(--t-ivory);
+  --color-charcoal: var(--t-charcoal);
+  --color-charcoal-light: var(--t-charcoal-light);
+  --font-display: var(--t-font-display);
+  --font-body: var(--t-font-body);
 }
 
 :root {
@@ -96,6 +96,21 @@
   --sidebar-accent-foreground: oklch(0.25 0.01 60);
   --sidebar-border: oklch(0.90 0.01 70);
   --sidebar-ring: oklch(0.58 0.15 35);
+  /* Theme tokens - overridden by useThemeSettings for dark mode */
+  --t-warm-50: oklch(0.98 0.005 70);
+  --t-warm-100: oklch(0.96 0.01 65);
+  --t-warm-200: oklch(0.92 0.015 60);
+  --t-warm-300: oklch(0.85 0.03 55);
+  --t-warm-400: oklch(0.72 0.06 50);
+  --t-terracotta: oklch(0.58 0.15 35);
+  --t-terracotta-light: oklch(0.68 0.12 38);
+  --t-terracotta-dark: oklch(0.48 0.16 32);
+  --t-cream: oklch(0.97 0.008 80);
+  --t-ivory: oklch(0.98 0.005 85);
+  --t-charcoal: oklch(0.25 0.01 60);
+  --t-charcoal-light: oklch(0.40 0.01 60);
+  --t-font-display: 'DM Serif Display', Georgia, serif;
+  --t-font-body: 'DM Sans', system-ui, sans-serif;
 }
 
 @layer base {
@@ -191,13 +206,13 @@
   border-radius: 9999px;
   padding: 0.75rem 2rem;
   background-color: transparent;
-  color: oklch(0.25 0.01 60);
-  border: 1.5px solid oklch(0.85 0.03 55);
+  color: var(--color-charcoal);
+  border: 1.5px solid var(--color-warm-300);
   transition: all 0.2s ease-out;
   text-decoration: none;
 }
 .pill-outline:hover {
-  background-color: oklch(0.96 0.01 65);
+  background-color: var(--color-warm-100);
   border-color: var(--color-terracotta-light);
   color: var(--color-terracotta-dark);
 }
@@ -236,21 +251,21 @@
   border-radius: 9999px;
   padding: 0.625rem 1.25rem;
   background-color: transparent;
-  color: oklch(0.25 0.01 60);
-  border: 1.5px solid oklch(0.85 0.03 55);
+  color: var(--color-charcoal);
+  border: 1.5px solid var(--color-warm-300);
   transition: all 0.2s ease-out;
   text-decoration: none;
 }
 .pill-outline-sm:hover {
-  background-color: oklch(0.96 0.01 65);
+  background-color: var(--color-warm-100);
   border-color: var(--color-terracotta-light);
   color: var(--color-terracotta-dark);
 }
 
 /* Warm Card */
 .warm-card {
-  background-color: oklch(0.99 0.004 80);
-  border: 1px solid oklch(0.90 0.01 70);
+  background-color: var(--card);
+  border: 1px solid var(--border);
   border-radius: 1.25rem;
   box-shadow: 0 4px 24px oklch(0.25 0.01 60 / 0.06);
   transition: all 0.3s ease;
@@ -258,6 +273,14 @@
 .warm-card:hover {
   box-shadow: 0 8px 40px oklch(0.25 0.01 60 / 0.1);
   transform: translateY(-2px);
+}
+
+/* Dark mode warm card */
+.portfolio-dark .warm-card {
+  box-shadow: 0 4px 24px oklch(0 0 0 / 0.2);
+}
+.portfolio-dark .warm-card:hover {
+  box-shadow: 0 8px 40px oklch(0 0 0 / 0.3);
 }
 
 /* Grain overlay */
@@ -297,18 +320,33 @@ html {
   width: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: oklch(0.97 0.008 80);
+  background: var(--background);
 }
 ::-webkit-scrollbar-thumb {
-  background: oklch(0.85 0.03 55);
+  background: var(--color-warm-300);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.72 0.06 50);
+  background: var(--color-warm-400);
 }
 
 /* Selection color */
 ::selection {
   background-color: color-mix(in oklch, var(--color-terracotta) 15%, transparent);
-  color: oklch(0.25 0.01 60);
+  color: var(--foreground);
+}
+
+/* Dark mode specific overrides */
+.portfolio-dark .grain-overlay::after {
+  opacity: 0.05;
+}
+
+.portfolio-dark ::-webkit-scrollbar-track {
+  background: oklch(0.15 0.01 260);
+}
+.portfolio-dark ::-webkit-scrollbar-thumb {
+  background: oklch(0.35 0.015 260);
+}
+.portfolio-dark ::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.45 0.02 260);
 }

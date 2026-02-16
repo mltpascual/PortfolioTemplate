@@ -503,6 +503,7 @@ export interface ThemeSettings {
   accent_color_hover: string;
   heading_font: string;
   body_font: string;
+  dark_mode: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -512,6 +513,7 @@ export const DEFAULT_THEME: Omit<ThemeSettings, 'id' | 'created_at' | 'updated_a
   accent_color_hover: '#9A4A2E',
   heading_font: 'DM Serif Display',
   body_font: 'DM Sans',
+  dark_mode: false,
 };
 
 function themeSettingsToCamel(row: ThemeSettings) {
@@ -521,6 +523,7 @@ function themeSettingsToCamel(row: ThemeSettings) {
     accentColorHover: row.accent_color_hover,
     headingFont: row.heading_font,
     bodyFont: row.body_font,
+    darkMode: row.dark_mode ?? false,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -542,6 +545,7 @@ export async function getThemeSettings() {
       accentColorHover: DEFAULT_THEME.accent_color_hover,
       headingFont: DEFAULT_THEME.heading_font,
       bodyFont: DEFAULT_THEME.body_font,
+      darkMode: DEFAULT_THEME.dark_mode,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -554,6 +558,7 @@ export async function updateThemeSettings(input: {
   accentColorHover?: string;
   headingFont?: string;
   bodyFont?: string;
+  darkMode?: boolean;
 }) {
   const sb = getSupabaseAdmin();
   const snakeData: Record<string, any> = {};
@@ -561,6 +566,7 @@ export async function updateThemeSettings(input: {
   if (input.accentColorHover !== undefined) snakeData.accent_color_hover = input.accentColorHover;
   if (input.headingFont !== undefined) snakeData.heading_font = input.headingFont;
   if (input.bodyFont !== undefined) snakeData.body_font = input.bodyFont;
+  if (input.darkMode !== undefined) snakeData.dark_mode = input.darkMode;
   snakeData.updated_at = new Date().toISOString();
 
   // Get existing row
@@ -574,6 +580,7 @@ export async function updateThemeSettings(input: {
         accent_color_hover: input.accentColorHover || DEFAULT_THEME.accent_color_hover,
         heading_font: input.headingFont || DEFAULT_THEME.heading_font,
         body_font: input.bodyFont || DEFAULT_THEME.body_font,
+        dark_mode: input.darkMode ?? DEFAULT_THEME.dark_mode,
       })
       .select()
       .single();
@@ -597,6 +604,7 @@ export async function resetThemeSettings() {
     accentColorHover: DEFAULT_THEME.accent_color_hover,
     headingFont: DEFAULT_THEME.heading_font,
     bodyFont: DEFAULT_THEME.body_font,
+    darkMode: DEFAULT_THEME.dark_mode,
   });
 }
 

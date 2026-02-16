@@ -20,10 +20,25 @@ import Footer from "@/components/Footer";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { useThemeSettings } from "@/hooks/useThemeSettings";
 
+function LoadingSkeleton() {
+  return (
+    <div className="min-h-screen bg-cream flex items-center justify-center">
+      <div className="flex flex-col items-center gap-4">
+        <div className="w-10 h-10 border-3 border-terracotta/30 border-t-terracotta rounded-full animate-spin" />
+        <p className="text-charcoal-light font-body text-sm tracking-wide animate-pulse">Loading portfolio...</p>
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
-  const { portfolio } = usePortfolio();
+  const { portfolio, isLoading } = usePortfolio();
   // Fetch and apply theme settings (accent color + fonts) from the database
   useThemeSettings();
+
+  if (isLoading || !portfolio) {
+    return <LoadingSkeleton />;
+  }
 
   return (
     <div className="min-h-screen">

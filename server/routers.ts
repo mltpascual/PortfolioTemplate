@@ -48,6 +48,7 @@ export const appRouter = router({
           accentColorHover: z.string().optional(),
           headingFont: z.string().optional(),
           bodyFont: z.string().optional(),
+          darkMode: z.boolean().optional(),
         })
       )
       .mutation(async ({ input }) => {

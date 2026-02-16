@@ -619,6 +619,7 @@ function ThemeTab() {
   const [accentColorHover, setAccentColorHover] = useState("#9A4A2E");
   const [headingFont, setHeadingFont] = useState("DM Serif Display");
   const [bodyFont, setBodyFont] = useState("DM Sans");
+  const [darkMode, setDarkMode] = useState(false);
   const [initialized, setInitialized] = useState(false);
 
   const HEADING_FONTS = [
@@ -632,20 +633,35 @@ function ThemeTab() {
     "Manrope", "Figtree", "IBM Plex Sans",
   ];
 
+  // Load Google Fonts for preview
+  const loadFont = (fontName: string) => {
+    const encoded = encodeURIComponent(fontName);
+    const linkId = `google-font-${encoded}`;
+    if (document.getElementById(linkId)) return;
+    const link = document.createElement("link");
+    link.id = linkId;
+    link.rel = "stylesheet";
+    link.href = `https://fonts.googleapis.com/css2?family=${encoded.replace(/%20/g, "+")}:wght@300;400;500;600;700&display=swap`;
+    document.head.appendChild(link);
+  };
+
   useEffect(() => {
     if (theme && !initialized) {
       setAccentColor(theme.accentColor || "#B85C38");
       setAccentColorHover(theme.accentColorHover || "#9A4A2E");
       setHeadingFont(theme.headingFont || "DM Serif Display");
       setBodyFont(theme.bodyFont || "DM Sans");
+      setDarkMode(theme.darkMode ?? false);
       setInitialized(true);
     }
   }, [theme, initialized]);
 
-  // Auto-generate hover color when accent changes
+  // Load fonts when they change
+  useEffect(() => { loadFont(headingFont); }, [headingFont]);
+  useEffect(() => { loadFont(bodyFont); }, [bodyFont]);
+
   const handleAccentChange = (hex: string) => {
     setAccentColor(hex);
-    // Darken by ~15% for hover
     const h = hex.replace("#", "");
     const r = Math.max(0, Math.round(parseInt(h.substring(0, 2), 16) * 0.85));
     const g = Math.max(0, Math.round(parseInt(h.substring(2, 4), 16) * 0.85));
@@ -654,7 +670,7 @@ function ThemeTab() {
   };
 
   const handleSave = () => {
-    updateMutation.mutate({ accentColor, accentColorHover, headingFont, bodyFont });
+    updateMutation.mutate({ accentColor, accentColorHover, headingFont, bodyFont, darkMode });
   };
 
   const handleReset = () => {
@@ -662,17 +678,18 @@ function ThemeTab() {
     setAccentColorHover("#9A4A2E");
     setHeadingFont("DM Serif Display");
     setBodyFont("DM Sans");
+    setDarkMode(false);
     resetMutation.mutate();
   };
 
   const isDefault =
     accentColor === "#B85C38" &&
     headingFont === "DM Serif Display" &&
-    bodyFont === "DM Sans";
+    bodyFont === "DM Sans" &&
+    darkMode === false;
 
   if (isLoading) return <LoadingSpinner />;
 
-  // Preset color palettes
   const presetColors = [
     { name: "Terracotta", hex: "#B85C38" },
     { name: "Ocean Blue", hex: "#2563EB" },
@@ -686,8 +703,197 @@ function ThemeTab() {
     { name: "Coral", hex: "#F97316" },
   ];
 
+  // Preview colors
+  const previewBg = darkMode ? "#1a1a2e" : "#f5f0eb";
+  const previewCardBg = darkMode ? "#222240" : "#ffffff";
+  const previewText = darkMode ? "#e8e0d8" : "#3d3229";
+  const previewTextMuted = darkMode ? "#a09890" : "#6b5e52";
+  const previewBorder = darkMode ? "#333355" : "#e8e0d8";
+
   return (
     <div className="space-y-8">
+      {/* Live Preview Panel */}
+      <div className="warm-card p-6 md:p-8">
+        <div className="mb-6">
+          <h3 className="text-xl text-charcoal" style={{ fontFamily: "var(--font-display)" }}>
+            Live Preview
+          </h3>
+          <p className="text-sm text-charcoal-light mt-1" style={{ fontFamily: "var(--font-body)" }}>
+            See how your portfolio will look with the current theme settings.
+          </p>
+        </div>
+
+        {/* Mini Portfolio Preview */}
+        <div
+          className="rounded-2xl border-2 overflow-hidden transition-all duration-300"
+          style={{ borderColor: previewBorder }}
+        >
+          {/* Mini Navbar */}
+          <div
+            className="flex items-center justify-between px-6 py-3 border-b transition-all duration-300"
+            style={{ backgroundColor: darkMode ? "rgba(26,26,46,0.9)" : "rgba(245,240,235,0.9)", borderColor: previewBorder }}
+          >
+            <span
+              className="text-base font-semibold transition-colors duration-300"
+              style={{ fontFamily: `'${headingFont}', Georgia, serif`, color: previewText }}
+            >
+              Your Name
+            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-xs transition-colors duration-300" style={{ fontFamily: `'${bodyFont}', sans-serif`, color: previewTextMuted }}>About</span>
+              <span className="text-xs transition-colors duration-300" style={{ fontFamily: `'${bodyFont}', sans-serif`, color: previewTextMuted }}>Projects</span>
+              <span className="text-xs transition-colors duration-300" style={{ fontFamily: `'${bodyFont}', sans-serif`, color: previewTextMuted }}>Contact</span>
+              <span
+                className="text-xs px-3 py-1 rounded-full text-white transition-all duration-300"
+                style={{ backgroundColor: accentColor, fontFamily: `'${bodyFont}', sans-serif` }}
+              >
+                Get in Touch
+              </span>
+            </div>
+          </div>
+
+          {/* Mini Hero Section */}
+          <div
+            className="px-6 py-10 transition-all duration-300"
+            style={{ backgroundColor: previewBg }}
+          >
+            <div className="flex items-center gap-6">
+              <div className="flex-1">
+                <div
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs mb-4 transition-colors duration-300"
+                  style={{ backgroundColor: darkMode ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.05)", color: previewTextMuted }}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accentColor }} />
+                  Available for work
+                </div>
+                <h2
+                  className="text-2xl md:text-3xl leading-tight mb-3 transition-colors duration-300"
+                  style={{ fontFamily: `'${headingFont}', Georgia, serif`, color: previewText }}
+                >
+                  Crafting digital experiences with purpose.
+                </h2>
+                <p
+                  className="text-sm leading-relaxed mb-5 transition-colors duration-300"
+                  style={{ fontFamily: `'${bodyFont}', system-ui, sans-serif`, color: previewTextMuted }}
+                >
+                  Full-stack software engineer building scalable web applications.
+                </p>
+                <div className="flex gap-3">
+                  <span
+                    className="text-xs px-4 py-2 rounded-full text-white transition-all duration-300"
+                    style={{ backgroundColor: accentColor }}
+                  >
+                    View My Work
+                  </span>
+                  <span
+                    className="text-xs px-4 py-2 rounded-full border transition-all duration-300"
+                    style={{ borderColor: previewBorder, color: previewText }}
+                  >
+                    Let's Connect
+                  </span>
+                </div>
+              </div>
+              <div
+                className="w-24 h-24 md:w-32 md:h-32 rounded-2xl flex-shrink-0 transition-colors duration-300"
+                style={{ backgroundColor: darkMode ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)" }}
+              />
+            </div>
+          </div>
+
+          {/* Mini Skills Section */}
+          <div
+            className="px-6 py-6 border-t transition-all duration-300"
+            style={{ backgroundColor: previewBg, borderColor: previewBorder }}
+          >
+            <h3
+              className="text-sm font-semibold mb-3 transition-colors duration-300"
+              style={{ fontFamily: `'${headingFont}', Georgia, serif`, color: previewText }}
+            >
+              Skills & Expertise
+            </h3>
+            <div className="grid grid-cols-3 gap-2">
+              {["Frontend", "Backend", "Design"].map((skill) => (
+                <div
+                  key={skill}
+                  className="p-2.5 rounded-xl text-center transition-all duration-300"
+                  style={{ backgroundColor: previewCardBg, border: `1px solid ${previewBorder}` }}
+                >
+                  <div
+                    className="w-5 h-5 rounded-lg mx-auto mb-1.5 flex items-center justify-center transition-colors duration-300"
+                    style={{ backgroundColor: `${accentColor}20` }}
+                  >
+                    <div className="w-2.5 h-2.5 rounded" style={{ backgroundColor: accentColor }} />
+                  </div>
+                  <span
+                    className="text-xs font-medium transition-colors duration-300"
+                    style={{ fontFamily: `'${bodyFont}', sans-serif`, color: previewText }}
+                  >
+                    {skill}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dark Mode Toggle */}
+      <div className="warm-card p-6 md:p-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-xl text-charcoal" style={{ fontFamily: "var(--font-display)" }}>
+              Dark Mode
+            </h3>
+            <p className="text-sm text-charcoal-light mt-1" style={{ fontFamily: "var(--font-body)" }}>
+              Switch between light and dark backgrounds for your portfolio.
+            </p>
+          </div>
+          <button
+            onClick={() => setDarkMode(!darkMode)}
+            className={`relative w-14 h-7 rounded-full transition-all duration-300 ${
+              darkMode ? "" : "bg-warm-300"
+            }`}
+            style={darkMode ? { backgroundColor: accentColor } : {}}
+            aria-label="Toggle dark mode"
+          >
+            <span
+              className={`absolute top-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-all duration-300 ${
+                darkMode ? "left-7" : "left-0.5"
+              }`}
+            />
+            <span className="sr-only">{darkMode ? "Dark mode on" : "Dark mode off"}</span>
+          </button>
+        </div>
+        <div className="mt-4 flex items-center gap-3">
+          <div
+            className="flex-1 p-3 rounded-xl border-2 text-center cursor-pointer transition-all duration-200"
+            onClick={() => setDarkMode(false)}
+            style={{
+              borderColor: !darkMode ? accentColor : "var(--color-warm-200)",
+              backgroundColor: !darkMode ? `${accentColor}10` : "transparent",
+            }}
+          >
+            <div className="w-8 h-8 mx-auto rounded-lg mb-2" style={{ backgroundColor: "#f5f0eb" }}>
+              <div className="w-full h-full rounded-lg border" style={{ borderColor: "#e8e0d8" }} />
+            </div>
+            <span className="text-xs font-medium text-charcoal" style={{ fontFamily: "var(--font-body)" }}>Light</span>
+          </div>
+          <div
+            className="flex-1 p-3 rounded-xl border-2 text-center cursor-pointer transition-all duration-200"
+            onClick={() => setDarkMode(true)}
+            style={{
+              borderColor: darkMode ? accentColor : "var(--color-warm-200)",
+              backgroundColor: darkMode ? `${accentColor}10` : "transparent",
+            }}
+          >
+            <div className="w-8 h-8 mx-auto rounded-lg mb-2" style={{ backgroundColor: "#1a1a2e" }}>
+              <div className="w-full h-full rounded-lg border" style={{ borderColor: "#333355" }} />
+            </div>
+            <span className="text-xs font-medium text-charcoal" style={{ fontFamily: "var(--font-body)" }}>Dark</span>
+          </div>
+        </div>
+      </div>
+
       {/* Color Accent Section */}
       <div className="warm-card p-6 md:p-8">
         <div className="flex items-center justify-between mb-6">
@@ -701,7 +907,6 @@ function ThemeTab() {
           </div>
         </div>
 
-        {/* Color Picker + Hex Input */}
         <div className="flex items-center gap-4 mb-6">
           <div className="relative">
             <input
@@ -745,7 +950,6 @@ function ThemeTab() {
           </div>
         </div>
 
-        {/* Preset Colors */}
         <div>
           <label className="block text-sm font-medium text-charcoal mb-3" style={{ fontFamily: "var(--font-body)" }}>
             Preset Colors
@@ -768,33 +972,6 @@ function ThemeTab() {
             ))}
           </div>
         </div>
-
-        {/* Live Preview */}
-        <div className="mt-6 p-4 rounded-xl bg-warm-50 border border-warm-200">
-          <label className="block text-sm font-medium text-charcoal mb-3" style={{ fontFamily: "var(--font-body)" }}>
-            Preview
-          </label>
-          <div className="flex flex-wrap gap-3 items-center">
-            <button
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium text-white transition-all"
-              style={{ backgroundColor: accentColor, fontFamily: "var(--font-body)" }}
-            >
-              Primary Button
-            </button>
-            <button
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium border-2 transition-all"
-              style={{ borderColor: accentColor, color: accentColor, fontFamily: "var(--font-body)" }}
-            >
-              Outline Button
-            </button>
-            <span
-              className="text-sm font-medium"
-              style={{ color: accentColor }}
-            >
-              Accent Text
-            </span>
-          </div>
-        </div>
       </div>
 
       {/* Fonts Section */}
@@ -809,7 +986,6 @@ function ThemeTab() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Heading Font */}
           <div>
             <label className="block text-sm font-medium text-charcoal mb-1.5" style={{ fontFamily: "var(--font-body)" }}>
               Heading Font
@@ -824,9 +1000,7 @@ function ThemeTab() {
                 <option key={font} value={font}>{font}</option>
               ))}
             </select>
-            <div
-              className="mt-3 p-4 rounded-xl bg-warm-50 border border-warm-200"
-            >
+            <div className="mt-3 p-4 rounded-xl bg-warm-50 border border-warm-200">
               <p className="text-2xl text-charcoal" style={{ fontFamily: `'${headingFont}', Georgia, serif` }}>
                 The quick brown fox
               </p>
@@ -836,7 +1010,6 @@ function ThemeTab() {
             </div>
           </div>
 
-          {/* Body Font */}
           <div>
             <label className="block text-sm font-medium text-charcoal mb-1.5" style={{ fontFamily: "var(--font-body)" }}>
               Body Font
@@ -851,9 +1024,7 @@ function ThemeTab() {
                 <option key={font} value={font}>{font}</option>
               ))}
             </select>
-            <div
-              className="mt-3 p-4 rounded-xl bg-warm-50 border border-warm-200"
-            >
+            <div className="mt-3 p-4 rounded-xl bg-warm-50 border border-warm-200">
               <p className="text-base text-charcoal" style={{ fontFamily: `'${bodyFont}', system-ui, sans-serif` }}>
                 The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.
               </p>

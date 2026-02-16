@@ -87,4 +87,14 @@
 - [x] Backend tRPC API for get/update theme settings
 - [x] Admin dashboard UI with color picker, font selector, and reset to default button
 - [x] Frontend applies saved theme settings dynamically on portfolio pages
-- [ ] Push to GitHub and verify on Vercel
+- [x] Push to GitHub and verify on Vercel
+
+## Phase 13: Live Preview, Dark Mode, Actual Content
+- [x] Live preview panel in Theme tab showing mini portfolio as settings change
+- [x] Dark mode toggle in theme settings with separate dark color palette
+- [x] Database schema update for dark mode setting
+- [x] CSS variables updated to support dynamic dark/light mode switching via --t-* tokens
+- [x] Replace placeholder content with actual portfolio data (Miguel Pascual)
+- [x] Fix flash-of-default-content issue (Alex Chen shows briefly before real data loads)
+- [x] Write tests for new features
+- [x] Push to GitHub and verify on Vercel
