@@ -212,4 +212,11 @@
 - [x] Store section order in database
 - [x] Wire Home.tsx to dynamically render sections based on layout mode and section order
 - [x] Test and verify all combinations work (76 tests passing)
+- [x] Push to GitHub
+
+## Phase 30: Navbar Fix, Admin Grouping, Project Screenshots
+- [x] Fix navbar links to work in combined pill-tab mode (scroll to combined section + activate correct tab)
+- [x] Group Skills/Experience/Education in admin section arrangement when combined mode is selected
+- [x] Take screenshots of all 11 project URLs (site-shot.com + browser retakes for 5 failed ones)
+- [x] Upload screenshots to S3 and update project image_url + live_url in Supabase (11/11 updated)
 - [ ] Push to GitHub

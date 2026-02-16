@@ -1649,6 +1649,196 @@ function SortableSectionItem({ id, index, total, onMoveUp, onMoveDown }: {
   );
 }
 
+const COMBINED_GROUP_IDS = new Set(["skills", "experience", "education"]);
+
+/**
+ * In combined mode, we show a grouped view:
+ * - Non-combined sections are individually sortable
+ * - Skills/Experience/Education appear as a single grouped block
+ * The grouped block's position is determined by the first combined section in the order.
+ */
+function buildGroupedOrder(sectionOrder: string[]): { id: string; isGroup: boolean }[] {
+  const result: { id: string; isGroup: boolean }[] = [];
+  let groupInserted = false;
+  for (const s of sectionOrder) {
+    if (COMBINED_GROUP_IDS.has(s)) {
+      if (!groupInserted) {
+        result.push({ id: "__combined_group__", isGroup: true });
+        groupInserted = true;
+      }
+    } else {
+      result.push({ id: s, isGroup: false });
+    }
+  }
+  return result;
+}
+
+/**
+ * Convert grouped order back to flat section order.
+ * The combined group expands to skills,experience,education in their original relative order.
+ */
+function ungroupOrder(groupedOrder: { id: string; isGroup: boolean }[], originalOrder: string[]): string[] {
+  const combinedSections = originalOrder.filter((s) => COMBINED_GROUP_IDS.has(s));
+  const result: string[] = [];
+  for (const item of groupedOrder) {
+    if (item.isGroup) {
+      result.push(...combinedSections);
+    } else {
+      result.push(item.id);
+    }
+  }
+  return result;
+}
+
+function SortableGroupItem({ id, label, icon: Icon, index, total, onMoveUp, onMoveDown, isGroup, groupItems }: {
+  id: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  index: number;
+  total: number;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+  isGroup?: boolean;
+  groupItems?: string[];
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : "auto" as any,
+  };
+
+  if (isGroup) {
+    return (
+      <div
+        ref={setNodeRef}
+        style={style}
+        className={`rounded-2xl border-2 transition-all ${
+          isDragging
+            ? "border-terracotta/40 bg-terracotta/5 shadow-lg"
+            : "border-terracotta/20 bg-terracotta/[0.03] hover:border-terracotta/30"
+        }`}
+      >
+        {/* Group header */}
+        <div className="flex items-center gap-3 px-4 py-3 border-b border-terracotta/10">
+          <button
+            {...attributes}
+            {...listeners}
+            className="p-1.5 rounded-lg hover:bg-terracotta/10 transition-colors cursor-grab active:cursor-grabbing touch-none"
+            aria-label="Drag group to reorder"
+          >
+            <GripVertical className="w-4 h-4 text-terracotta" />
+          </button>
+          <div className="flex items-center gap-2 flex-1">
+            <span className="text-xs font-semibold uppercase tracking-wider text-terracotta" style={{ fontFamily: "var(--font-body)" }}>
+              Combined Pill Tabs
+            </span>
+            <span className="text-[10px] px-2 py-0.5 rounded-full bg-terracotta/10 text-terracotta font-medium">
+              Grouped
+            </span>
+          </div>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={onMoveUp}
+              disabled={index === 0}
+              className="p-1.5 rounded-lg hover:bg-terracotta/10 transition-colors disabled:opacity-30"
+              title="Move group up"
+            >
+              <ArrowUp className="w-3.5 h-3.5 text-terracotta" />
+            </button>
+            <button
+              onClick={onMoveDown}
+              disabled={index === total - 1}
+              className="p-1.5 rounded-lg hover:bg-terracotta/10 transition-colors disabled:opacity-30"
+              title="Move group down"
+            >
+              <ArrowDown className="w-3.5 h-3.5 text-terracotta" />
+            </button>
+          </div>
+        </div>
+        {/* Group children */}
+        <div className="px-4 py-3 space-y-1.5">
+          {(groupItems || []).map((childId) => {
+            const meta = SECTION_LABELS[childId] || { label: childId, icon: LayoutGrid };
+            const ChildIcon = meta.icon;
+            return (
+              <div key={childId} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-white/60 border border-warm-200/40">
+                <div className="w-7 h-7 rounded-lg bg-terracotta/8 flex items-center justify-center">
+                  <ChildIcon className="w-3.5 h-3.5 text-terracotta" />
+                </div>
+                <span className="text-sm text-charcoal" style={{ fontFamily: "var(--font-body)" }}>
+                  {meta.label}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
+        isDragging
+          ? "bg-terracotta/5 border-terracotta/30 shadow-lg"
+          : "bg-white border-warm-200/60 hover:border-warm-300"
+      }`}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="p-1.5 rounded-lg hover:bg-warm-100 transition-colors cursor-grab active:cursor-grabbing touch-none"
+        aria-label="Drag to reorder"
+      >
+        <GripVertical className="w-4 h-4 text-charcoal-light" />
+      </button>
+      <div className="flex items-center gap-3 flex-1">
+        <div className="w-9 h-9 rounded-xl bg-terracotta/8 flex items-center justify-center">
+          <Icon className="w-4 h-4 text-terracotta" />
+        </div>
+        <div>
+          <span className="text-sm font-medium text-charcoal" style={{ fontFamily: "var(--font-body)" }}>
+            {label}
+          </span>
+          <span className="text-xs text-charcoal-light ml-2" style={{ fontFamily: "var(--font-body)" }}>
+            #{index + 1}
+          </span>
+        </div>
+      </div>
+      <div className="flex items-center gap-1">
+        <button
+          onClick={onMoveUp}
+          disabled={index === 0}
+          className="p-1.5 rounded-lg hover:bg-warm-100 transition-colors disabled:opacity-30"
+          title="Move up"
+        >
+          <ArrowUp className="w-3.5 h-3.5 text-charcoal-light" />
+        </button>
+        <button
+          onClick={onMoveDown}
+          disabled={index === total - 1}
+          className="p-1.5 rounded-lg hover:bg-warm-100 transition-colors disabled:opacity-30"
+          title="Move down"
+        >
+          <ArrowDown className="w-3.5 h-3.5 text-charcoal-light" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function LayoutTab() {
   const utils = trpc.useUtils();
   const { data: theme, isLoading } = trpc.adminTheme.get.useQuery();
@@ -1681,19 +1871,45 @@ function LayoutTab() {
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
 
+  const isCombined = layoutMode === "combined";
+
+  // Build the display order based on mode
+  const groupedOrder = isCombined ? buildGroupedOrder(sectionOrder) : null;
+  const displayItems = isCombined
+    ? (groupedOrder || []).map((g) => g.id)
+    : sectionOrder;
+
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
-    if (over && active.id !== over.id) {
+    if (!over || active.id === over.id) return;
+
+    if (isCombined && groupedOrder) {
+      const oldIndex = displayItems.indexOf(active.id as string);
+      const newIndex = displayItems.indexOf(over.id as string);
+      const newGrouped = arrayMove(groupedOrder, oldIndex, newIndex);
+      setSectionOrder(ungroupOrder(newGrouped, sectionOrder));
+    } else {
       const oldIndex = sectionOrder.indexOf(active.id as string);
       const newIndex = sectionOrder.indexOf(over.id as string);
       setSectionOrder(arrayMove(sectionOrder, oldIndex, newIndex));
     }
   };
 
-  const moveSection = (index: number, direction: "up" | "down") => {
+  const moveSectionGrouped = (index: number, direction: "up" | "down") => {
     const newIndex = direction === "up" ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= sectionOrder.length) return;
-    setSectionOrder(arrayMove(sectionOrder, index, newIndex));
+    if (!groupedOrder || newIndex < 0 || newIndex >= groupedOrder.length) return;
+    const newGrouped = arrayMove(groupedOrder, index, newIndex);
+    setSectionOrder(ungroupOrder(newGrouped, sectionOrder));
+  };
+
+  const moveSection = (index: number, direction: "up" | "down") => {
+    if (isCombined) {
+      moveSectionGrouped(index, direction);
+    } else {
+      const newIndex = direction === "up" ? index - 1 : index + 1;
+      if (newIndex < 0 || newIndex >= sectionOrder.length) return;
+      setSectionOrder(arrayMove(sectionOrder, index, newIndex));
+    }
   };
 
   const handleSave = () => {
@@ -1713,6 +1929,9 @@ function LayoutTab() {
     sectionOrder.join(",") === DEFAULT_SECTION_ORDER;
 
   if (isLoading) return <LoadingSpinner />;
+
+  // Get the combined group items for display
+  const combinedGroupItems = sectionOrder.filter((s) => COMBINED_GROUP_IDS.has(s));
 
   return (
     <div className="space-y-8">
@@ -1755,7 +1974,6 @@ function LayoutTab() {
             <p className="text-xs text-charcoal-light leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
               Skills, Experience, and Education are shown as individual full-width sections with their own headers.
             </p>
-            {/* Mini preview */}
             <div className="mt-4 space-y-1.5">
               <div className="h-2 rounded-full bg-warm-200 w-full" />
               <div className="h-2 rounded-full bg-warm-200 w-full" />
@@ -1792,7 +2010,6 @@ function LayoutTab() {
             <p className="text-xs text-charcoal-light leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
               Skills, Experience, and Education are merged into one section with pill-tab navigation to switch between them.
             </p>
-            {/* Mini preview */}
             <div className="mt-4">
               <div className="flex gap-1.5 mb-2">
                 <div className="h-2 rounded-full bg-terracotta w-12" />
@@ -1811,7 +2028,10 @@ function LayoutTab() {
           Section Arrangement
         </h3>
         <p className="text-sm text-charcoal-light mb-6" style={{ fontFamily: "var(--font-body)" }}>
-          Drag and drop or use arrows to reorder sections on your portfolio page.
+          {isCombined
+            ? "Drag and drop to reorder sections. Skills, Experience, and Education move as a group."
+            : "Drag and drop or use arrows to reorder sections on your portfolio page."
+          }
         </p>
 
         <DndContext
@@ -1819,30 +2039,54 @@ function LayoutTab() {
           collisionDetection={closestCenter}
           onDragEnd={handleDragEnd}
         >
-          <SortableContext items={sectionOrder} strategy={verticalListSortingStrategy}>
+          <SortableContext items={displayItems} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
-              {sectionOrder.map((sectionId, index) => (
-                <SortableSectionItem
-                  key={sectionId}
-                  id={sectionId}
-                  index={index}
-                  total={sectionOrder.length}
-                  onMoveUp={() => moveSection(index, "up")}
-                  onMoveDown={() => moveSection(index, "down")}
-                />
-              ))}
+              {isCombined && groupedOrder
+                ? groupedOrder.map((item, index) => {
+                    if (item.isGroup) {
+                      return (
+                        <SortableGroupItem
+                          key="__combined_group__"
+                          id="__combined_group__"
+                          label="Combined Pill Tabs"
+                          icon={Wrench}
+                          index={index}
+                          total={groupedOrder.length}
+                          onMoveUp={() => moveSection(index, "up")}
+                          onMoveDown={() => moveSection(index, "down")}
+                          isGroup
+                          groupItems={combinedGroupItems}
+                        />
+                      );
+                    }
+                    const meta = SECTION_LABELS[item.id] || { label: item.id, icon: LayoutGrid };
+                    return (
+                      <SortableGroupItem
+                        key={item.id}
+                        id={item.id}
+                        label={meta.label}
+                        icon={meta.icon}
+                        index={index}
+                        total={groupedOrder.length}
+                        onMoveUp={() => moveSection(index, "up")}
+                        onMoveDown={() => moveSection(index, "down")}
+                      />
+                    );
+                  })
+                : sectionOrder.map((sectionId, index) => (
+                    <SortableSectionItem
+                      key={sectionId}
+                      id={sectionId}
+                      index={index}
+                      total={sectionOrder.length}
+                      onMoveUp={() => moveSection(index, "up")}
+                      onMoveDown={() => moveSection(index, "down")}
+                    />
+                  ))
+              }
             </div>
           </SortableContext>
         </DndContext>
-
-        {layoutMode === "combined" && (
-          <div className="mt-4 p-3 rounded-xl bg-terracotta/5 border border-terracotta/20">
-            <p className="text-xs text-terracotta" style={{ fontFamily: "var(--font-body)" }}>
-              In combined mode, Skills, Experience, and Education will appear as one section with pill tabs.
-              The position of the combined section is determined by whichever of the three appears first in the order above.
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Save / Reset */}

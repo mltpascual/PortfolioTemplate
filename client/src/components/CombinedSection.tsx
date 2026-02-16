@@ -4,7 +4,7 @@
  * Matches the warm editorial design language.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import {
   Code2,
   Database,
@@ -52,6 +52,18 @@ export default function CombinedSection({ skills, experiences, education }: Comb
     return () => observer.disconnect();
   }, []);
 
+  // Listen for custom events dispatched by the Navbar to switch tabs
+  useEffect(() => {
+    const handleTabSwitch = (e: Event) => {
+      const tab = (e as CustomEvent).detail as Tab;
+      if (["skills", "experience", "education"].includes(tab)) {
+        setActiveTab(tab);
+      }
+    };
+    window.addEventListener("combined-tab-switch", handleTabSwitch);
+    return () => window.removeEventListener("combined-tab-switch", handleTabSwitch);
+  }, []);
+
   const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: "skills", label: "Skills", icon: <Code2 className="w-4 h-4" /> },
     { key: "experience", label: "Experience", icon: <Briefcase className="w-4 h-4" /> },
@@ -60,10 +72,14 @@ export default function CombinedSection({ skills, experiences, education }: Comb
 
   return (
     <section
-      id="skills"
+      id="combined-section"
       ref={sectionRef}
       className="section-padding bg-warm-50/50"
     >
+      {/* Hidden anchor targets so hash links still work */}
+      <span id="skills" className="absolute" style={{ top: "-100px" }} />
+      <span id="experience" className="absolute" style={{ top: "-100px" }} />
+      <span id="education" className="absolute" style={{ top: "-100px" }} />
       <div className="container">
         {/* Section Header */}
         <div
