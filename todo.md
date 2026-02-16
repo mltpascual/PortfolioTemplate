@@ -177,3 +177,6 @@
 ## Phase 24: Revert Tile Design + Admin Tile Grid
 - [x] Revert ProjectsSection to original stacked card design (image on top, content below, natural height)
 - [x] Convert admin Projects tab from list view to tile/grid layout with drag-and-drop
+
+## Phase 25: Public Projects 3-Column Grid
+- [x] Change public ProjectsSection from 2-column to 3-column grid to match admin panel
