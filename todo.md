@@ -249,4 +249,4 @@
 - [x] Update navbar: show Skills, Experience, Education as separate links (not "Skills & More")
 - [x] When clicked, scroll to combined pill-tab section and auto-select the correct tab
 - [x] Test upload with Supabase Storage (verified via tRPC mutation test script)
-- [ ] Push to GitHub
+- [x] Push to GitHub

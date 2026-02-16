@@ -243,13 +243,13 @@ function ExperienceContent({ experiences }: { experiences: PortfolioData["experi
 
                 <p
                   className="text-charcoal-light leading-relaxed text-sm md:text-base mb-4"
-                  style={{ fontFamily: "var(--font-body)" }}
+                  style={{ fontFamily: "var(--font-body)", paddingLeft: '61px' }}
                 >
                   {exp.description}
                 </p>
 
                 {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2" style={{ paddingLeft: '61px' }}>
                     {tags.map((tag) => (
                       <span
                         key={tag}
