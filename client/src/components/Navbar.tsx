@@ -5,7 +5,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { Menu, X, Settings } from "lucide-react";
+import { Menu, X, Settings, FileText } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import type { PortfolioData } from "@/hooks/usePortfolio";
 
@@ -34,6 +34,7 @@ export default function Navbar({ profile }: NavbarProps) {
   }, []);
 
   const displayName = profile?.fullName || "Alex Chen";
+  const resumeUrl = profile?.resumeUrl;
 
   return (
     <header
@@ -65,6 +66,18 @@ export default function Navbar({ profile }: NavbarProps) {
               {link.label}
             </a>
           ))}
+          {resumeUrl && (
+            <a
+              href={resumeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-4 py-2 text-sm font-medium text-charcoal-light rounded-full transition-all duration-200 hover:bg-warm-100 hover:text-terracotta-dark inline-flex items-center gap-1.5"
+              style={{ fontFamily: "var(--font-body)" }}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              Resume
+            </a>
+          )}
           <a href="#contact" className="pill-primary-sm ml-3">
             Get in Touch
           </a>
@@ -108,6 +121,19 @@ export default function Navbar({ profile }: NavbarProps) {
               {link.label}
             </a>
           ))}
+          {resumeUrl && (
+            <a
+              href={resumeUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center gap-2 py-3 text-base font-medium text-charcoal-light hover:text-terracotta-dark transition-colors"
+              style={{ fontFamily: "var(--font-body)" }}
+            >
+              <FileText className="w-4 h-4" />
+              Resume
+            </a>
+          )}
           <a
             href="#contact"
             onClick={() => setMobileOpen(false)}

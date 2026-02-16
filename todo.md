@@ -98,3 +98,20 @@
 - [x] Fix flash-of-default-content issue (Alex Chen shows briefly before real data loads)
 - [x] Write tests for new features
 - [x] Push to GitHub and verify on Vercel
+
+## Phase 14: Project Screenshots, Avatar, and Resume
+- [x] Capture/gather project screenshots for all 10 projects
+- [x] Upload project screenshots to S3 and update database
+- [x] Add avatar/headshot photo and upload to S3
+- [x] Update resume link to open in new tab instead of download
+- [x] Push to GitHub and verify on Vercel
+
+## Phase 15: Resume, New Projects, Real Screenshots
+- [x] Download resume PDF from mltpascual.vercel.app and upload to S3
+- [x] Update existing project live URLs with actual Vercel deployments
+- [x] Add new projects: CAD Studio, GentlyPure, MiniArcadeGames, ResumeForge, SkintillaBeauty, MultiGynPH, MakeItHappen, SkyPulseWeather, Portfolio2024
+- [x] Capture real screenshots from live Vercel project URLs
+- [x] Upload screenshots to S3 and update database
+- [x] Add Resume button to Navbar (opens in new tab)
+- [x] Add resume_url field to profile in database
+- [x] Push to GitHub and verify on Vercel
