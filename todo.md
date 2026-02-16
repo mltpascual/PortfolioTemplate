@@ -241,3 +241,12 @@
   - Root cause: /api/upload Express route was not being reached in published version
   - Fix: Switched to tRPC mutation (trpc.adminUpload.image) which routes through /api/trpc
 - [x] Verify fix by actually uploading a test image (confirmed: tRPC upload returns valid S3 URL)
+
+## Phase 31: Supabase Storage + Navbar Separate Links
+- [x] Switch image upload from Manus Forge S3 to Supabase Storage
+- [x] Create Supabase storage bucket for portfolio images (portfolio-images, public, 10MB limit)
+- [x] Update tRPC upload mutation to use Supabase Storage SDK (verified: uploads return supabase.co URLs)
+- [x] Update navbar: show Skills, Experience, Education as separate links (not "Skills & More")
+- [x] When clicked, scroll to combined pill-tab section and auto-select the correct tab
+- [x] Test upload with Supabase Storage (verified via tRPC mutation test script)
+- [ ] Push to GitHub

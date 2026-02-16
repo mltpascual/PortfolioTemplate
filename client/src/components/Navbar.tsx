@@ -60,7 +60,6 @@ export default function Navbar({ profile }: NavbarProps) {
       .filter(Boolean);
 
     const links: { sectionId: string; label: string; href: string }[] = [];
-    let combinedShown = false;
 
     for (const sectionId of sections) {
       // Skip sections that don't have nav links
@@ -69,22 +68,13 @@ export default function Navbar({ profile }: NavbarProps) {
       const meta = NAV_LINK_MAP[sectionId];
       if (!meta) continue;
 
-      // In combined mode, show only one link for the combined group
-      if (isCombined && COMBINED_SECTIONS.has(sectionId)) {
-        if (combinedShown) continue;
-        combinedShown = true;
-        links.push({
-          sectionId,
-          label: "Skills & More",
-          href: "#skills",
-        });
-      } else {
-        links.push({
-          sectionId,
-          label: meta.label,
-          href: meta.href,
-        });
-      }
+      // In combined mode, each Skills/Experience/Education link still shows separately
+      // but clicking them scrolls to the combined section and activates the correct tab
+      links.push({
+        sectionId,
+        label: meta.label,
+        href: meta.href,
+      });
     }
 
     return links;
