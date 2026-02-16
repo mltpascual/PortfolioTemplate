@@ -1,18 +1,21 @@
 // Vercel Serverless Function entry point
-// This wraps the Express app for Vercel's serverless environment
+// This file is bundled by esbuild into api/index.mjs for Vercel deployment
 import "dotenv/config";
 import express from "express";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
-import { registerOAuthRoutes } from "../server/_core/oauth.js";
-import { appRouter } from "../server/routers.js";
-import { createContext } from "../server/_core/context.js";
+import { appRouter } from "./routers";
+import { createContext } from "./_core/context";
+import { registerOAuthRoutes } from "./_core/oauth";
 
 const app = express();
+
+// Trust proxy for correct protocol detection behind Vercel's edge
+app.set("trust proxy", 1);
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
-// OAuth callback under /api/auth/github
+// GitHub OAuth routes
 registerOAuthRoutes(app);
 
 // tRPC API
@@ -23,5 +26,10 @@ app.use(
     createContext,
   })
 );
+
+// Health check
+app.get("/api/health", (_req, res) => {
+  res.json({ status: "ok", timestamp: new Date().toISOString() });
+});
 
 export default app;
