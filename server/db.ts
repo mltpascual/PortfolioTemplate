@@ -6,7 +6,9 @@ import { ENV } from "./_core/env";
 // ==========================================
 
 let _supabase: SupabaseClient | null = null;
+let _supabaseAdmin: SupabaseClient | null = null;
 
+/** Public client using anon key — respects RLS (read-only) */
 function getSupabase(): SupabaseClient {
   if (!_supabase) {
     const url = process.env.SUPABASE_URL;
@@ -17,6 +19,19 @@ function getSupabase(): SupabaseClient {
     _supabase = createClient(url, key);
   }
   return _supabase;
+}
+
+/** Admin client using service_role key — bypasses RLS (read + write) */
+function getSupabaseAdmin(): SupabaseClient {
+  if (!_supabaseAdmin) {
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!url || !key) {
+      throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set");
+    }
+    _supabaseAdmin = createClient(url, key);
+  }
+  return _supabaseAdmin;
 }
 
 // Keep getDb for backward compatibility with _core auth system
@@ -369,7 +384,7 @@ export async function getProfile() {
 }
 
 export async function upsertProfile(input: Record<string, any>) {
-  const sb = getSupabase();
+  const sb = getSupabaseAdmin();
   const snakeData = profileToSnake(input);
 
   // Check if profile exists
@@ -422,7 +437,7 @@ export async function getProjectById(id: number) {
 }
 
 export async function createProject(input: Record<string, any>) {
-  const sb = getSupabase();
+  const sb = getSupabaseAdmin();
   const snakeData = projectToSnake(input);
   const { data, error } = await sb
     .from("projects")
@@ -434,7 +449,7 @@ export async function createProject(input: Record<string, any>) {
 }
 
 export async function updateProject(id: number, input: Record<string, any>) {
-  const sb = getSupabase();
+  const sb = getSupabaseAdmin();
   const snakeData = projectToSnake(input);
   const { data, error } = await sb
     .from("projects")
@@ -447,7 +462,7 @@ export async function updateProject(id: number, input: Record<string, any>) {
 }
 
 export async function deleteProject(id: number) {
-  const sb = getSupabase();
+  const sb = getSupabaseAdmin();
   const { error } = await sb.from("projects").delete().eq("id", id);
   if (error) throw new Error(`Failed to delete project: ${error.message}`);
 }
@@ -480,7 +495,7 @@ export async function getExperienceById(id: number) {
 }
 
 export async function createExperience(input: Record<string, any>) {
-  const sb = getSupabase();
+  const sb = getSupabaseAdmin();
   const snakeData = experienceToSnake(input);
   const { data, error } = await sb
     .from("experiences")
@@ -495,7 +510,7 @@ export async function updateExperience(
   id: number,
   input: Record<string, any>
 ) {
-  const sb = getSupabase();
+  const sb = getSupabaseAdmin();
   const snakeData = experienceToSnake(input);
   const { data, error } = await sb
     .from("experiences")
@@ -508,7 +523,7 @@ export async function updateExperience(
 }
 
 export async function deleteExperience(id: number) {
-  const sb = getSupabase();
+  const sb = getSupabaseAdmin();
   const { error } = await sb.from("experiences").delete().eq("id", id);
   if (error) throw new Error(`Failed to delete experience: ${error.message}`);
 }
@@ -541,7 +556,7 @@ export async function getSkillCategoryById(id: number) {
 }
 
 export async function createSkillCategory(input: Record<string, any>) {
-  const sb = getSupabase();
+  const sb = getSupabaseAdmin();
   const snakeData = skillCategoryToSnake(input);
   const { data, error } = await sb
     .from("skill_categories")
@@ -557,7 +572,7 @@ export async function updateSkillCategory(
   id: number,
   input: Record<string, any>
 ) {
-  const sb = getSupabase();
+  const sb = getSupabaseAdmin();
   const snakeData = skillCategoryToSnake(input);
   const { data, error } = await sb
     .from("skill_categories")
@@ -571,7 +586,7 @@ export async function updateSkillCategory(
 }
 
 export async function deleteSkillCategory(id: number) {
-  const sb = getSupabase();
+  const sb = getSupabaseAdmin();
   const { error } = await sb.from("skill_categories").delete().eq("id", id);
   if (error)
     throw new Error(`Failed to delete skill category: ${error.message}`);

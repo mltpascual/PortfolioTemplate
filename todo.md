@@ -43,3 +43,12 @@
 - [x] Keep Drizzle/MySQL for built-in auth (users table)
 - [x] Test connection - 13 tests passing (Supabase + auth + portfolio CRUD)
 - [x] Save checkpoint
+
+## Phase 8: Fix Supabase RLS Security Warnings
+- [x] Drop overly permissive 'service_all_*' policies (ALL with true/true)
+- [x] Create proper SELECT-only policies (public read for all 4 tables)
+- [x] Writes handled via service_role key (bypasses RLS) — no INSERT/UPDATE/DELETE policies needed
+- [x] Add SUPABASE_SERVICE_ROLE_KEY env var
+- [x] Update server/db.ts — getSupabaseAdmin() for writes, getSupabase() for reads
+- [x] All 15 tests passing (auth + supabase + service_role + portfolio CRUD)
+- [x] Save checkpoint
