@@ -242,14 +242,14 @@ function ExperienceContent({ experiences }: { experiences: PortfolioData["experi
                 </div>
 
                 <p
-                  className="text-charcoal-light leading-relaxed text-sm md:text-base mb-4"
-                  style={{ fontFamily: "var(--font-body)", paddingLeft: '61px' }}
+                  className="text-charcoal-light leading-relaxed text-sm md:text-base mb-4 ml-[52px] md:ml-[60px]"
+                  style={{ fontFamily: "var(--font-body)" }}
                 >
                   {exp.description}
                 </p>
 
                 {tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2" style={{ paddingLeft: '61px' }}>
+                  <div className="flex flex-wrap gap-2 ml-[52px] md:ml-[60px]">
                     {tags.map((tag) => (
                       <span
                         key={tag}
@@ -322,7 +322,7 @@ function EducationContent({ education }: { education: PortfolioData["education"]
 
               {edu.description && (
                 <p
-                  className="text-charcoal-light leading-relaxed text-sm md:text-base"
+                  className="text-charcoal-light leading-relaxed text-sm md:text-base ml-[52px] md:ml-[60px]"
                   style={{ fontFamily: "var(--font-body)" }}
                 >
                   {edu.description}
