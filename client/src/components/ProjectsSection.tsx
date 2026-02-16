@@ -15,6 +15,31 @@ const FALLBACK_IMAGES = [
   "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&h=500&fit=crop",
 ];
 
+/* ── Hook: observe a single element ────────────────────────────── */
+function useInView(options?: IntersectionObserverInit) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect(); // animate once
+        }
+      },
+      { rootMargin: "0px 0px -60px 0px", threshold: 0, ...options }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  return { ref, visible };
+}
+
+/* ── Project Preview (iframe + image toggle) ───────────────────── */
 interface ProjectPreviewProps {
   liveUrl: string | null;
   imageUrl: string | null;
@@ -36,11 +61,7 @@ function ProjectPreview({ liveUrl, imageUrl, title, fallbackIndex }: ProjectPrev
     if (mode === "live") {
       setIframeLoaded(false);
       setIframeFailed(false);
-
-      // Set a timeout — if iframe doesn't load in 8 seconds, mark as failed
-      timeoutRef.current = setTimeout(() => {
-        setIframeFailed(true);
-      }, 8000);
+      timeoutRef.current = setTimeout(() => setIframeFailed(true), 10000);
     }
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -61,13 +82,13 @@ function ProjectPreview({ liveUrl, imageUrl, title, fallbackIndex }: ProjectPrev
   const hasToggle = liveUrl && (imageUrl || fallbackImage);
 
   return (
-    <div className="relative w-full h-64 lg:h-full min-h-[280px] overflow-hidden group">
+    <div className="relative w-full aspect-video lg:aspect-auto lg:h-full min-h-[220px] sm:min-h-[280px] overflow-hidden group">
       {/* Toggle Button */}
       {hasToggle && (
         <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-charcoal/70 backdrop-blur-sm rounded-full p-1 shadow-lg">
           <button
             onClick={() => setMode("live")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
               mode === "live"
                 ? "bg-terracotta text-white shadow-sm"
                 : "text-white/70 hover:text-white"
@@ -75,11 +96,11 @@ function ProjectPreview({ liveUrl, imageUrl, title, fallbackIndex }: ProjectPrev
             title="Live Preview"
           >
             <Globe className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Live</span>
+            <span>Live</span>
           </button>
           <button
             onClick={() => setMode("image")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
               mode === "image"
                 ? "bg-terracotta text-white shadow-sm"
                 : "text-white/70 hover:text-white"
@@ -87,7 +108,7 @@ function ProjectPreview({ liveUrl, imageUrl, title, fallbackIndex }: ProjectPrev
             title="Static Image"
           >
             <Image className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Image</span>
+            <span>Image</span>
           </button>
         </div>
       )}
@@ -95,7 +116,6 @@ function ProjectPreview({ liveUrl, imageUrl, title, fallbackIndex }: ProjectPrev
       {/* Live Preview (iframe) */}
       {showLivePreview && (
         <div className="absolute inset-0">
-          {/* Loading spinner while iframe loads */}
           {!iframeLoaded && (
             <div className="absolute inset-0 bg-warm-100 flex flex-col items-center justify-center z-10">
               <Loader2 className="w-8 h-8 text-terracotta animate-spin mb-2" />
@@ -111,7 +131,7 @@ function ProjectPreview({ liveUrl, imageUrl, title, fallbackIndex }: ProjectPrev
             ref={iframeRef}
             src={liveUrl}
             title={`${title} - Live Preview`}
-            className={`w-full h-full border-0 transition-opacity duration-300 ${
+            className={`border-0 transition-opacity duration-300 ${
               iframeLoaded ? "opacity-100" : "opacity-0"
             }`}
             style={{
@@ -120,6 +140,9 @@ function ProjectPreview({ liveUrl, imageUrl, title, fallbackIndex }: ProjectPrev
               width: "200%",
               height: "200%",
               pointerEvents: "none",
+              position: "absolute",
+              top: 0,
+              left: 0,
             }}
             sandbox="allow-scripts allow-same-origin"
             loading="lazy"
@@ -140,7 +163,6 @@ function ProjectPreview({ liveUrl, imageUrl, title, fallbackIndex }: ProjectPrev
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                 loading="lazy"
               />
-              {/* Show "site unavailable" badge if iframe failed */}
               {mode === "live" && iframeFailed && (
                 <div className="absolute bottom-3 left-3 z-10 flex items-center gap-1.5 bg-charcoal/70 backdrop-blur-sm text-white/90 text-xs px-3 py-1.5 rounded-full">
                   <Globe className="w-3 h-3" />
@@ -159,32 +181,127 @@ function ProjectPreview({ liveUrl, imageUrl, title, fallbackIndex }: ProjectPrev
   );
 }
 
+/* ── Single Project Card ───────────────────────────────────────── */
+interface ProjectCardProps {
+  project: PortfolioData["projects"][number];
+  index: number;
+}
+
+function ProjectCard({ project, index }: ProjectCardProps) {
+  const { ref, visible } = useInView();
+  const tags = parseTags(project.tags);
+
+  return (
+    <div
+      ref={ref}
+      className={`warm-card overflow-hidden transition-all duration-600 ${
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+      }`}
+    >
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
+        {/* Preview */}
+        <div
+          className={`lg:col-span-3 overflow-hidden ${
+            index % 2 !== 0 ? "lg:order-2" : ""
+          }`}
+        >
+          <ProjectPreview
+            liveUrl={project.liveUrl}
+            imageUrl={project.imageUrl}
+            title={project.title}
+            fallbackIndex={index}
+          />
+        </div>
+
+        {/* Content */}
+        <div
+          className={`lg:col-span-2 p-6 sm:p-8 lg:p-10 flex flex-col justify-center ${
+            index % 2 !== 0 ? "lg:order-1" : ""
+          }`}
+        >
+          {project.featured === 1 && (
+            <span
+              className="inline-flex self-start items-center px-3 py-1 rounded-full bg-terracotta/10 text-terracotta text-xs font-semibold mb-4"
+              style={{ fontFamily: "var(--font-body)" }}
+            >
+              Featured
+            </span>
+          )}
+          <h3
+            className="text-xl sm:text-2xl md:text-3xl text-charcoal mb-3"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
+            {project.title}
+          </h3>
+          <p
+            className="text-charcoal-light leading-relaxed mb-6 text-sm md:text-base"
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            {project.description}
+          </p>
+
+          {/* Tags */}
+          {tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-6 sm:mb-8">
+              {tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="text-xs font-medium px-3 py-1.5 rounded-full bg-warm-100 text-charcoal-light border border-warm-200/60"
+                  style={{ fontFamily: "var(--font-body)" }}
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex items-center gap-3 mt-auto">
+            {project.liveUrl && project.liveUrl !== "#" && (
+              <a
+                href={project.liveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="pill-primary-sm gap-2"
+              >
+                Live Demo
+                <ArrowUpRight className="w-4 h-4" />
+              </a>
+            )}
+            {project.githubUrl && project.githubUrl !== "#" && (
+              <a
+                href={project.githubUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="p-2.5 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all duration-200"
+                aria-label="View source code"
+              >
+                <Github className="w-4 h-4" />
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Projects Section ──────────────────────────────────────────── */
 interface ProjectsSectionProps {
   projects: PortfolioData["projects"];
 }
 
 export default function ProjectsSection({ projects }: ProjectsSectionProps) {
-  const sectionRef = useRef<HTMLElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) setVisible(true);
-      },
-      { threshold: 0.08 }
-    );
-    if (sectionRef.current) observer.observe(sectionRef.current);
-    return () => observer.disconnect();
-  }, []);
+  const { ref: headerRef, visible: headerVisible } = useInView();
 
   return (
-    <section id="projects" ref={sectionRef} className="section-padding">
+    <section id="projects" className="section-padding">
       <div className="container">
         {/* Section Header */}
         <div
-          className={`mb-16 transition-all duration-600 ${
-            visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
+          ref={headerRef}
+          className={`mb-12 sm:mb-16 transition-all duration-600 ${
+            headerVisible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"
           }`}
         >
           <span
@@ -195,7 +312,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
           </span>
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <h2
-              className="text-4xl md:text-5xl text-charcoal leading-tight"
+              className="text-3xl sm:text-4xl md:text-5xl text-charcoal leading-tight"
               style={{ fontFamily: "var(--font-display)" }}
             >
               Projects I'm
@@ -206,106 +323,10 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
         </div>
 
         {/* Projects */}
-        <div className="space-y-12">
-          {projects.map((project, i) => {
-            const tags = parseTags(project.tags);
-            return (
-              <div
-                key={project.id}
-                className={`warm-card overflow-hidden transition-all duration-600 ${
-                  visible
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-8"
-                }`}
-                style={{ transitionDelay: `${150 + i * 150}ms` }}
-              >
-                <div className="grid grid-cols-1 lg:grid-cols-5 gap-0">
-                  {/* Preview */}
-                  <div
-                    className={`lg:col-span-3 overflow-hidden ${
-                      i % 2 !== 0 ? "lg:order-2" : ""
-                    }`}
-                  >
-                    <ProjectPreview
-                      liveUrl={project.liveUrl}
-                      imageUrl={project.imageUrl}
-                      title={project.title}
-                      fallbackIndex={i}
-                    />
-                  </div>
-
-                  {/* Content */}
-                  <div
-                    className={`lg:col-span-2 p-8 lg:p-10 flex flex-col justify-center ${
-                      i % 2 !== 0 ? "lg:order-1" : ""
-                    }`}
-                  >
-                    {project.featured === 1 && (
-                      <span
-                        className="inline-flex self-start items-center px-3 py-1 rounded-full bg-terracotta/10 text-terracotta text-xs font-semibold mb-4"
-                        style={{ fontFamily: "var(--font-body)" }}
-                      >
-                        Featured
-                      </span>
-                    )}
-                    <h3
-                      className="text-2xl md:text-3xl text-charcoal mb-3"
-                      style={{ fontFamily: "var(--font-display)" }}
-                    >
-                      {project.title}
-                    </h3>
-                    <p
-                      className="text-charcoal-light leading-relaxed mb-6 text-sm md:text-base"
-                      style={{ fontFamily: "var(--font-body)" }}
-                    >
-                      {project.description}
-                    </p>
-
-                    {/* Tags */}
-                    {tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2 mb-8">
-                        {tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-xs font-medium px-3 py-1.5 rounded-full bg-warm-100 text-charcoal-light border border-warm-200/60"
-                            style={{ fontFamily: "var(--font-body)" }}
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-3 mt-auto">
-                      {project.liveUrl && project.liveUrl !== "#" && (
-                        <a
-                          href={project.liveUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="pill-primary-sm gap-2"
-                        >
-                          Live Demo
-                          <ArrowUpRight className="w-4 h-4" />
-                        </a>
-                      )}
-                      {project.githubUrl && project.githubUrl !== "#" && (
-                        <a
-                          href={project.githubUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2.5 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all duration-200"
-                          aria-label="View source code"
-                        >
-                          <Github className="w-4 h-4" />
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className="space-y-8 sm:space-y-12">
+          {projects.map((project, i) => (
+            <ProjectCard key={project.id} project={project} index={i} />
+          ))}
         </div>
       </div>
     </section>

@@ -121,3 +121,10 @@
 - [x] Add fallback to static image when site is down or iframe fails to load
 - [x] Add toggle button to switch between live preview and static image
 - [x] Push to GitHub and verify on Vercel
+
+## Bug Fix: Blank Projects Section
+- [x] Diagnose and fix blank Projects section (IntersectionObserver threshold too high for mobile)
+
+## Bug Fix: Mobile Projects Section + CAD URL
+- [x] Fix blank Projects section on mobile/phone view
+- [x] Update CAD Studio live URL to https://cadclone.vercel.app/
