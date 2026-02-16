@@ -26,6 +26,39 @@ export const appRouter = router({
   }),
 
   // ==========================================
+  // PUBLIC: Get theme settings (for frontend rendering)
+  // ==========================================
+  theme: router({
+    get: publicProcedure.query(async () => {
+      return db.getThemeSettings();
+    }),
+  }),
+
+  // ==========================================
+  // ADMIN: Theme settings management
+  // ==========================================
+  adminTheme: router({
+    get: adminProcedure.query(async () => {
+      return db.getThemeSettings();
+    }),
+    update: adminProcedure
+      .input(
+        z.object({
+          accentColor: z.string().optional(),
+          accentColorHover: z.string().optional(),
+          headingFont: z.string().optional(),
+          bodyFont: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        return db.updateThemeSettings(input);
+      }),
+    reset: adminProcedure.mutation(async () => {
+      return db.resetThemeSettings();
+    }),
+  }),
+
+  // ==========================================
   // ADMIN: Profile management
   // ==========================================
   adminProfile: router({

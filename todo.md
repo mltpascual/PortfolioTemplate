@@ -80,4 +80,11 @@
 - [ ] Deploy to Vercel
 - [ ] Set environment variables on Vercel
 - [ ] Update GitHub OAuth callback URL to production domain
-- [ ] Test the full auth flow on production
+- [x] Test the full auth flow on production
+
+## Phase 12: Theme Customization (Color Accent & Fonts)
+- [x] Database schema for storing accent color and font settings
+- [x] Backend tRPC API for get/update theme settings
+- [x] Admin dashboard UI with color picker, font selector, and reset to default button
+- [x] Frontend applies saved theme settings dynamically on portfolio pages
+- [ ] Push to GitHub and verify on Vercel

@@ -23,6 +23,8 @@ import {
   Wrench,
   Loader2,
   GripVertical,
+  Palette,
+  RotateCcw,
 } from "lucide-react";
 
 // ============================================================
@@ -591,6 +593,311 @@ function TextareaField({ label, value, onChange, placeholder, rows = 3 }: { labe
 }
 
 // ============================================================
+// THEME TAB
+// ============================================================
+function ThemeTab() {
+  const utils = trpc.useUtils();
+  const { data: theme, isLoading } = trpc.adminTheme.get.useQuery();
+  const updateMutation = trpc.adminTheme.update.useMutation({
+    onSuccess: () => {
+      utils.adminTheme.get.invalidate();
+      utils.theme.get.invalidate();
+      toast.success("Theme updated successfully!");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const resetMutation = trpc.adminTheme.reset.useMutation({
+    onSuccess: () => {
+      utils.adminTheme.get.invalidate();
+      utils.theme.get.invalidate();
+      toast.success("Theme reset to defaults!");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const [accentColor, setAccentColor] = useState("#B85C38");
+  const [accentColorHover, setAccentColorHover] = useState("#9A4A2E");
+  const [headingFont, setHeadingFont] = useState("DM Serif Display");
+  const [bodyFont, setBodyFont] = useState("DM Sans");
+  const [initialized, setInitialized] = useState(false);
+
+  const HEADING_FONTS = [
+    "DM Serif Display", "Playfair Display", "Lora", "Merriweather",
+    "Cormorant Garamond", "Libre Baskerville", "EB Garamond", "Crimson Text",
+    "Bitter", "Josefin Sans", "Montserrat", "Raleway", "Poppins", "Inter", "Space Grotesk",
+  ];
+  const BODY_FONTS = [
+    "DM Sans", "Inter", "Poppins", "Nunito", "Open Sans", "Lato",
+    "Source Sans 3", "Roboto", "Work Sans", "Outfit", "Plus Jakarta Sans",
+    "Manrope", "Figtree", "IBM Plex Sans",
+  ];
+
+  useEffect(() => {
+    if (theme && !initialized) {
+      setAccentColor(theme.accentColor || "#B85C38");
+      setAccentColorHover(theme.accentColorHover || "#9A4A2E");
+      setHeadingFont(theme.headingFont || "DM Serif Display");
+      setBodyFont(theme.bodyFont || "DM Sans");
+      setInitialized(true);
+    }
+  }, [theme, initialized]);
+
+  // Auto-generate hover color when accent changes
+  const handleAccentChange = (hex: string) => {
+    setAccentColor(hex);
+    // Darken by ~15% for hover
+    const h = hex.replace("#", "");
+    const r = Math.max(0, Math.round(parseInt(h.substring(0, 2), 16) * 0.85));
+    const g = Math.max(0, Math.round(parseInt(h.substring(2, 4), 16) * 0.85));
+    const b = Math.max(0, Math.round(parseInt(h.substring(4, 6), 16) * 0.85));
+    setAccentColorHover(`#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`);
+  };
+
+  const handleSave = () => {
+    updateMutation.mutate({ accentColor, accentColorHover, headingFont, bodyFont });
+  };
+
+  const handleReset = () => {
+    setAccentColor("#B85C38");
+    setAccentColorHover("#9A4A2E");
+    setHeadingFont("DM Serif Display");
+    setBodyFont("DM Sans");
+    resetMutation.mutate();
+  };
+
+  const isDefault =
+    accentColor === "#B85C38" &&
+    headingFont === "DM Serif Display" &&
+    bodyFont === "DM Sans";
+
+  if (isLoading) return <LoadingSpinner />;
+
+  // Preset color palettes
+  const presetColors = [
+    { name: "Terracotta", hex: "#B85C38" },
+    { name: "Ocean Blue", hex: "#2563EB" },
+    { name: "Forest Green", hex: "#16A34A" },
+    { name: "Royal Purple", hex: "#7C3AED" },
+    { name: "Rose Pink", hex: "#E11D48" },
+    { name: "Amber Gold", hex: "#D97706" },
+    { name: "Teal", hex: "#0D9488" },
+    { name: "Slate", hex: "#475569" },
+    { name: "Indigo", hex: "#4F46E5" },
+    { name: "Coral", hex: "#F97316" },
+  ];
+
+  return (
+    <div className="space-y-8">
+      {/* Color Accent Section */}
+      <div className="warm-card p-6 md:p-8">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-xl text-charcoal" style={{ fontFamily: "var(--font-display)" }}>
+              Color Accent
+            </h3>
+            <p className="text-sm text-charcoal-light mt-1" style={{ fontFamily: "var(--font-body)" }}>
+              Choose the primary accent color used throughout your portfolio.
+            </p>
+          </div>
+        </div>
+
+        {/* Color Picker + Hex Input */}
+        <div className="flex items-center gap-4 mb-6">
+          <div className="relative">
+            <input
+              type="color"
+              value={accentColor}
+              onChange={(e) => handleAccentChange(e.target.value)}
+              className="w-16 h-16 rounded-xl border-2 border-warm-200 cursor-pointer appearance-none bg-transparent"
+              style={{ padding: 0 }}
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-charcoal mb-1.5" style={{ fontFamily: "var(--font-body)" }}>
+              Accent Color
+            </label>
+            <input
+              type="text"
+              value={accentColor}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (/^#[0-9A-Fa-f]{0,6}$/.test(val)) {
+                  setAccentColor(val);
+                  if (val.length === 7) handleAccentChange(val);
+                }
+              }}
+              placeholder="#B85C38"
+              className="w-full max-w-[200px] px-4 py-2.5 rounded-xl bg-warm-50 border border-warm-200 text-charcoal placeholder:text-charcoal-light/50 focus:outline-none focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 transition-all text-sm font-mono"
+              style={{ fontFamily: "var(--font-body)" }}
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm font-medium text-charcoal mb-1.5" style={{ fontFamily: "var(--font-body)" }}>
+              Hover Color
+            </label>
+            <div className="flex items-center gap-2">
+              <div
+                className="w-8 h-8 rounded-lg border border-warm-200"
+                style={{ backgroundColor: accentColorHover }}
+              />
+              <span className="text-sm text-charcoal-light font-mono">{accentColorHover}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Preset Colors */}
+        <div>
+          <label className="block text-sm font-medium text-charcoal mb-3" style={{ fontFamily: "var(--font-body)" }}>
+            Preset Colors
+          </label>
+          <div className="flex flex-wrap gap-3">
+            {presetColors.map((preset) => (
+              <button
+                key={preset.hex}
+                onClick={() => handleAccentChange(preset.hex)}
+                className={`group relative w-10 h-10 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
+                  accentColor === preset.hex ? "border-charcoal ring-2 ring-charcoal/20 scale-110" : "border-warm-200 hover:border-warm-400"
+                }`}
+                style={{ backgroundColor: preset.hex }}
+                title={preset.name}
+              >
+                {accentColor === preset.hex && (
+                  <span className="absolute inset-0 flex items-center justify-center text-white text-xs font-bold">✓</span>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Live Preview */}
+        <div className="mt-6 p-4 rounded-xl bg-warm-50 border border-warm-200">
+          <label className="block text-sm font-medium text-charcoal mb-3" style={{ fontFamily: "var(--font-body)" }}>
+            Preview
+          </label>
+          <div className="flex flex-wrap gap-3 items-center">
+            <button
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium text-white transition-all"
+              style={{ backgroundColor: accentColor, fontFamily: "var(--font-body)" }}
+            >
+              Primary Button
+            </button>
+            <button
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium border-2 transition-all"
+              style={{ borderColor: accentColor, color: accentColor, fontFamily: "var(--font-body)" }}
+            >
+              Outline Button
+            </button>
+            <span
+              className="text-sm font-medium"
+              style={{ color: accentColor }}
+            >
+              Accent Text
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Fonts Section */}
+      <div className="warm-card p-6 md:p-8">
+        <div className="mb-6">
+          <h3 className="text-xl text-charcoal" style={{ fontFamily: "var(--font-display)" }}>
+            Typography
+          </h3>
+          <p className="text-sm text-charcoal-light mt-1" style={{ fontFamily: "var(--font-body)" }}>
+            Select the fonts for headings and body text.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Heading Font */}
+          <div>
+            <label className="block text-sm font-medium text-charcoal mb-1.5" style={{ fontFamily: "var(--font-body)" }}>
+              Heading Font
+            </label>
+            <select
+              value={headingFont}
+              onChange={(e) => setHeadingFont(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-warm-200 text-charcoal focus:outline-none focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 transition-all text-sm"
+              style={{ fontFamily: "var(--font-body)" }}
+            >
+              {HEADING_FONTS.map((font) => (
+                <option key={font} value={font}>{font}</option>
+              ))}
+            </select>
+            <div
+              className="mt-3 p-4 rounded-xl bg-warm-50 border border-warm-200"
+            >
+              <p className="text-2xl text-charcoal" style={{ fontFamily: `'${headingFont}', Georgia, serif` }}>
+                The quick brown fox
+              </p>
+              <p className="text-sm text-charcoal-light mt-1" style={{ fontFamily: "var(--font-body)" }}>
+                {headingFont}
+              </p>
+            </div>
+          </div>
+
+          {/* Body Font */}
+          <div>
+            <label className="block text-sm font-medium text-charcoal mb-1.5" style={{ fontFamily: "var(--font-body)" }}>
+              Body Font
+            </label>
+            <select
+              value={bodyFont}
+              onChange={(e) => setBodyFont(e.target.value)}
+              className="w-full px-4 py-2.5 rounded-xl bg-warm-50 border border-warm-200 text-charcoal focus:outline-none focus:border-terracotta focus:ring-2 focus:ring-terracotta/20 transition-all text-sm"
+              style={{ fontFamily: "var(--font-body)" }}
+            >
+              {BODY_FONTS.map((font) => (
+                <option key={font} value={font}>{font}</option>
+              ))}
+            </select>
+            <div
+              className="mt-3 p-4 rounded-xl bg-warm-50 border border-warm-200"
+            >
+              <p className="text-base text-charcoal" style={{ fontFamily: `'${bodyFont}', system-ui, sans-serif` }}>
+                The quick brown fox jumps over the lazy dog. Pack my box with five dozen liquor jugs.
+              </p>
+              <p className="text-sm text-charcoal-light mt-1" style={{ fontFamily: "var(--font-body)" }}>
+                {bodyFont}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div className="flex flex-wrap items-center gap-3">
+        <button
+          onClick={handleSave}
+          disabled={updateMutation.isPending}
+          className="pill-primary gap-2"
+        >
+          {updateMutation.isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Save className="w-4 h-4" />
+          )}
+          Save Theme
+        </button>
+        <button
+          onClick={handleReset}
+          disabled={resetMutation.isPending || isDefault}
+          className="pill-outline gap-2"
+          style={{ opacity: isDefault ? 0.5 : 1 }}
+        >
+          {resetMutation.isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <RotateCcw className="w-4 h-4" />
+          )}
+          Reset to Default
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // MAIN ADMIN PAGE
 // ============================================================
 const tabs = [
@@ -598,6 +905,7 @@ const tabs = [
   { id: "projects", label: "Projects", icon: FolderOpen },
   { id: "experience", label: "Experience", icon: Briefcase },
   { id: "skills", label: "Skills", icon: Wrench },
+  { id: "theme", label: "Theme", icon: Palette },
 ];
 
 export default function Admin() {
@@ -698,6 +1006,7 @@ export default function Admin() {
         {activeTab === "projects" && <ProjectsTab />}
         {activeTab === "experience" && <ExperienceTab />}
         {activeTab === "skills" && <SkillsTab />}
+        {activeTab === "theme" && <ThemeTab />}
       </div>
     </div>
   );

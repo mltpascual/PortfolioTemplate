@@ -6,6 +6,7 @@
  * 
  * Data is fetched from the database via tRPC and passed down to each section.
  * If the database is empty, sensible defaults are used.
+ * Theme settings (accent color, fonts) are fetched and applied dynamically.
  */
 
 import Navbar from "@/components/Navbar";
@@ -17,9 +18,12 @@ import ExperienceSection from "@/components/ExperienceSection";
 import ContactSection from "@/components/ContactSection";
 import Footer from "@/components/Footer";
 import { usePortfolio } from "@/hooks/usePortfolio";
+import { useThemeSettings } from "@/hooks/useThemeSettings";
 
 export default function Home() {
   const { portfolio } = usePortfolio();
+  // Fetch and apply theme settings (accent color + fonts) from the database
+  useThemeSettings();
 
   return (
     <div className="min-h-screen">

@@ -494,6 +494,113 @@ export async function deleteSkillCategory(id: number) {
 }
 
 // ==========================================
+// THEME SETTINGS (Supabase)
+// ==========================================
+
+export interface ThemeSettings {
+  id: number;
+  accent_color: string;
+  accent_color_hover: string;
+  heading_font: string;
+  body_font: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export const DEFAULT_THEME: Omit<ThemeSettings, 'id' | 'created_at' | 'updated_at'> = {
+  accent_color: '#B85C38',
+  accent_color_hover: '#9A4A2E',
+  heading_font: 'DM Serif Display',
+  body_font: 'DM Sans',
+};
+
+function themeSettingsToCamel(row: ThemeSettings) {
+  return {
+    id: row.id,
+    accentColor: row.accent_color,
+    accentColorHover: row.accent_color_hover,
+    headingFont: row.heading_font,
+    bodyFont: row.body_font,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export async function getThemeSettings() {
+  const sb = getSupabase();
+  const { data, error } = await sb
+    .from('theme_settings')
+    .select('*')
+    .limit(1)
+    .single();
+
+  if (error || !data) {
+    // Return defaults if no row exists
+    return {
+      id: 0,
+      accentColor: DEFAULT_THEME.accent_color,
+      accentColorHover: DEFAULT_THEME.accent_color_hover,
+      headingFont: DEFAULT_THEME.heading_font,
+      bodyFont: DEFAULT_THEME.body_font,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+  return themeSettingsToCamel(data as ThemeSettings);
+}
+
+export async function updateThemeSettings(input: {
+  accentColor?: string;
+  accentColorHover?: string;
+  headingFont?: string;
+  bodyFont?: string;
+}) {
+  const sb = getSupabaseAdmin();
+  const snakeData: Record<string, any> = {};
+  if (input.accentColor !== undefined) snakeData.accent_color = input.accentColor;
+  if (input.accentColorHover !== undefined) snakeData.accent_color_hover = input.accentColorHover;
+  if (input.headingFont !== undefined) snakeData.heading_font = input.headingFont;
+  if (input.bodyFont !== undefined) snakeData.body_font = input.bodyFont;
+  snakeData.updated_at = new Date().toISOString();
+
+  // Get existing row
+  const existing = await getThemeSettings();
+  if (existing.id === 0) {
+    // No row exists, insert
+    const { data, error } = await sb
+      .from('theme_settings')
+      .insert({
+        accent_color: input.accentColor || DEFAULT_THEME.accent_color,
+        accent_color_hover: input.accentColorHover || DEFAULT_THEME.accent_color_hover,
+        heading_font: input.headingFont || DEFAULT_THEME.heading_font,
+        body_font: input.bodyFont || DEFAULT_THEME.body_font,
+      })
+      .select()
+      .single();
+    if (error) throw new Error(`Failed to create theme settings: ${error.message}`);
+    return themeSettingsToCamel(data as ThemeSettings);
+  } else {
+    const { data, error } = await sb
+      .from('theme_settings')
+      .update(snakeData)
+      .eq('id', existing.id)
+      .select()
+      .single();
+    if (error) throw new Error(`Failed to update theme settings: ${error.message}`);
+    return themeSettingsToCamel(data as ThemeSettings);
+  }
+}
+
+export async function resetThemeSettings() {
+  return updateThemeSettings({
+    accentColor: DEFAULT_THEME.accent_color,
+    accentColorHover: DEFAULT_THEME.accent_color_hover,
+    headingFont: DEFAULT_THEME.heading_font,
+    bodyFont: DEFAULT_THEME.body_font,
+  });
+}
+
+// ==========================================
 // FULL PORTFOLIO (public endpoint)
 // ==========================================
 
