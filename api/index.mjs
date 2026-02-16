@@ -477,6 +477,71 @@ async function deleteSkillCategory(id) {
   if (error)
     throw new Error(`Failed to delete skill category: ${error.message}`);
 }
+var DEFAULT_THEME = {
+  accent_color: "#B85C38",
+  accent_color_hover: "#9A4A2E",
+  heading_font: "DM Serif Display",
+  body_font: "DM Sans"
+};
+function themeSettingsToCamel(row) {
+  return {
+    id: row.id,
+    accentColor: row.accent_color,
+    accentColorHover: row.accent_color_hover,
+    headingFont: row.heading_font,
+    bodyFont: row.body_font,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at
+  };
+}
+async function getThemeSettings() {
+  const sb = getSupabase();
+  const { data, error } = await sb.from("theme_settings").select("*").limit(1).single();
+  if (error || !data) {
+    return {
+      id: 0,
+      accentColor: DEFAULT_THEME.accent_color,
+      accentColorHover: DEFAULT_THEME.accent_color_hover,
+      headingFont: DEFAULT_THEME.heading_font,
+      bodyFont: DEFAULT_THEME.body_font,
+      createdAt: (/* @__PURE__ */ new Date()).toISOString(),
+      updatedAt: (/* @__PURE__ */ new Date()).toISOString()
+    };
+  }
+  return themeSettingsToCamel(data);
+}
+async function updateThemeSettings(input) {
+  const sb = getSupabaseAdmin();
+  const snakeData = {};
+  if (input.accentColor !== void 0) snakeData.accent_color = input.accentColor;
+  if (input.accentColorHover !== void 0) snakeData.accent_color_hover = input.accentColorHover;
+  if (input.headingFont !== void 0) snakeData.heading_font = input.headingFont;
+  if (input.bodyFont !== void 0) snakeData.body_font = input.bodyFont;
+  snakeData.updated_at = (/* @__PURE__ */ new Date()).toISOString();
+  const existing = await getThemeSettings();
+  if (existing.id === 0) {
+    const { data, error } = await sb.from("theme_settings").insert({
+      accent_color: input.accentColor || DEFAULT_THEME.accent_color,
+      accent_color_hover: input.accentColorHover || DEFAULT_THEME.accent_color_hover,
+      heading_font: input.headingFont || DEFAULT_THEME.heading_font,
+      body_font: input.bodyFont || DEFAULT_THEME.body_font
+    }).select().single();
+    if (error) throw new Error(`Failed to create theme settings: ${error.message}`);
+    return themeSettingsToCamel(data);
+  } else {
+    const { data, error } = await sb.from("theme_settings").update(snakeData).eq("id", existing.id).select().single();
+    if (error) throw new Error(`Failed to update theme settings: ${error.message}`);
+    return themeSettingsToCamel(data);
+  }
+}
+async function resetThemeSettings() {
+  return updateThemeSettings({
+    accentColor: DEFAULT_THEME.accent_color,
+    accentColorHover: DEFAULT_THEME.accent_color_hover,
+    headingFont: DEFAULT_THEME.heading_font,
+    bodyFont: DEFAULT_THEME.body_font
+  });
+}
 async function getFullPortfolio() {
   const [profileData, projectsData, experiencesData, skillsData] = await Promise.all([
     getProfile(),
@@ -509,6 +574,35 @@ var appRouter = router({
   portfolio: router({
     getAll: publicProcedure.query(async () => {
       return getFullPortfolio();
+    })
+  }),
+  // ==========================================
+  // PUBLIC: Get theme settings (for frontend rendering)
+  // ==========================================
+  theme: router({
+    get: publicProcedure.query(async () => {
+      return getThemeSettings();
+    })
+  }),
+  // ==========================================
+  // ADMIN: Theme settings management
+  // ==========================================
+  adminTheme: router({
+    get: adminProcedure.query(async () => {
+      return getThemeSettings();
+    }),
+    update: adminProcedure.input(
+      z2.object({
+        accentColor: z2.string().optional(),
+        accentColorHover: z2.string().optional(),
+        headingFont: z2.string().optional(),
+        bodyFont: z2.string().optional()
+      })
+    ).mutation(async ({ input }) => {
+      return updateThemeSettings(input);
+    }),
+    reset: adminProcedure.mutation(async () => {
+      return resetThemeSettings();
     })
   }),
   // ==========================================
