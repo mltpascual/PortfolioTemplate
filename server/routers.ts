@@ -95,6 +95,7 @@ export const appRouter = router({
           layoutMode: z.enum(["separate", "combined"]).optional(),
           sectionOrder: z.string().max(500).optional(),
           hiddenSections: z.string().max(500).optional(),
+          sectionTitles: z.string().max(2000).optional(),
         })
       )
       .mutation(async ({ input }) => {

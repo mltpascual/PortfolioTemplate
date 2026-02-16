@@ -9,9 +9,10 @@ import type { PortfolioData } from "@/hooks/usePortfolio";
 
 interface EducationSectionProps {
   education: PortfolioData["education"];
+  customTitle?: string;
 }
 
-export default function EducationSection({ education }: EducationSectionProps) {
+export default function EducationSection({ education, customTitle }: EducationSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -43,7 +44,7 @@ export default function EducationSection({ education }: EducationSectionProps) {
             className="text-sm font-semibold tracking-widest uppercase text-terracotta mb-4 block"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            Education
+            {customTitle || "Education"}
           </span>
           <h2
             className="text-4xl md:text-5xl text-charcoal leading-tight max-w-xl"

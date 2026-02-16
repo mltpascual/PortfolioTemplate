@@ -10,9 +10,10 @@ import { parseTags } from "@/hooks/usePortfolio";
 
 interface ExperienceSectionProps {
   experiences: PortfolioData["experiences"];
+  customTitle?: string;
 }
 
-export default function ExperienceSection({ experiences }: ExperienceSectionProps) {
+export default function ExperienceSection({ experiences, customTitle }: ExperienceSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -44,7 +45,7 @@ export default function ExperienceSection({ experiences }: ExperienceSectionProp
             className="text-sm font-semibold tracking-widest uppercase text-terracotta mb-4 block"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            Experience
+            {customTitle || "Experience"}
           </span>
           <h2
             className="text-4xl md:text-5xl text-charcoal leading-tight max-w-xl"

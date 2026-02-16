@@ -38,6 +38,7 @@ import {
   LayoutGrid,
   ArrowUp,
   ArrowDown,
+  Type,
 } from "lucide-react";
 import {
   DndContext,
@@ -1618,6 +1619,7 @@ const SECTION_LABELS: Record<string, { label: string; icon: React.ComponentType<
   experience: { label: "Experience", icon: Briefcase },
   education: { label: "Education", icon: GraduationCap },
   contact: { label: "Contact", icon: Eye },
+  combined: { label: "Combined Section", icon: Wrench },
 };
 
 const DEFAULT_SECTION_ORDER = "hero,about,projects,skills,experience,education,contact";
@@ -1913,6 +1915,7 @@ function LayoutTab() {
     DEFAULT_SECTION_ORDER.split(",")
   );
   const [hiddenSections, setHiddenSections] = useState<Set<string>>(new Set());
+  const [sectionTitles, setSectionTitles] = useState<Record<string, string>>({});
   const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
@@ -1922,6 +1925,10 @@ function LayoutTab() {
       setSectionOrder(order.split(",").map((s: string) => s.trim()).filter(Boolean));
       const hidden = theme.hiddenSections ? new Set(theme.hiddenSections.split(",").map((s: string) => s.trim()).filter(Boolean)) : new Set<string>();
       setHiddenSections(hidden);
+      try {
+        const titles = theme.sectionTitles ? JSON.parse(theme.sectionTitles) : {};
+        setSectionTitles(titles);
+      } catch { setSectionTitles({}); }
       setInitialized(true);
     }
   }, [theme, initialized]);
@@ -1989,6 +1996,7 @@ function LayoutTab() {
       layoutMode,
       sectionOrder: sectionOrder.join(","),
       hiddenSections: Array.from(hiddenSections).join(","),
+      sectionTitles: JSON.stringify(sectionTitles),
     });
   };
 
@@ -1996,12 +2004,25 @@ function LayoutTab() {
     setLayoutMode("separate");
     setSectionOrder(DEFAULT_SECTION_ORDER.split(","));
     setHiddenSections(new Set());
+    setSectionTitles({});
   };
 
   const isDefault =
     layoutMode === "separate" &&
     sectionOrder.join(",") === DEFAULT_SECTION_ORDER &&
-    hiddenSections.size === 0;
+    hiddenSections.size === 0 &&
+    Object.keys(sectionTitles).length === 0;
+
+  const DEFAULT_SECTION_TITLES: Record<string, string> = {
+    hero: "Hero",
+    about: "About Me",
+    projects: "Projects",
+    skills: "Skills & Expertise",
+    experience: "Experience",
+    education: "Education",
+    contact: "Get in Touch",
+    combined: "What I bring to the table.",
+  };
 
   if (isLoading) return <LoadingSpinner />;
 
@@ -2152,6 +2173,60 @@ function LayoutTab() {
                   <Eye className="w-4 h-4 text-terracotta" />
                 )}
               </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Section Titles */}
+      <div className="warm-card p-6 md:p-8">
+        <div className="flex items-center gap-3 mb-2">
+          <Type className="w-5 h-5 text-terracotta" />
+          <h3 className="text-xl text-charcoal" style={{ fontFamily: "var(--font-display)" }}>
+            Section Titles
+          </h3>
+        </div>
+        <p className="text-sm text-charcoal-light mb-6" style={{ fontFamily: "var(--font-body)" }}>
+          Customize the heading text for each section. Leave blank to use the default title.
+        </p>
+        <div className="space-y-4">
+          {Object.entries(DEFAULT_SECTION_TITLES).map(([key, defaultTitle]) => {
+            const meta = SECTION_LABELS[key] || { label: key, icon: LayoutGrid };
+            const Icon = meta.icon;
+            // Skip "combined" entry if not in combined mode
+            if (key === "combined" && !isCombined) return null;
+            // Skip individual skills/experience/education if in combined mode
+            if (isCombined && COMBINED_GROUP_IDS.has(key)) return null;
+            return (
+              <div key={key} className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-terracotta/8 flex items-center justify-center flex-shrink-0 mt-1">
+                  <Icon className="w-4 h-4 text-terracotta" />
+                </div>
+                <div className="flex-1">
+                  <label className="text-xs font-medium text-charcoal-light mb-1 block" style={{ fontFamily: "var(--font-body)" }}>
+                    {key === "combined" ? "Combined Section" : meta.label}
+                  </label>
+                  <input
+                    type="text"
+                    value={sectionTitles[key] || ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSectionTitles((prev) => {
+                        const next = { ...prev };
+                        if (val === "") {
+                          delete next[key];
+                        } else {
+                          next[key] = val;
+                        }
+                        return next;
+                      });
+                    }}
+                    placeholder={defaultTitle}
+                    className="w-full px-3 py-2 rounded-xl border border-warm-200/60 bg-white text-sm text-charcoal placeholder:text-charcoal-light/50 focus:outline-none focus:border-terracotta/40 focus:ring-2 focus:ring-terracotta/10 transition-all"
+                    style={{ fontFamily: "var(--font-body)" }}
+                  />
+                </div>
+              </div>
             );
           })}
         </div>

@@ -648,6 +648,7 @@ export interface ThemeSettings {
   layout_mode: string;
   section_order: string;
   hidden_sections: string;
+  section_titles: string;
   created_at: string;
   updated_at: string;
 }
@@ -661,6 +662,7 @@ export const DEFAULT_THEME: Omit<ThemeSettings, 'id' | 'created_at' | 'updated_a
   layout_mode: 'separate',
   section_order: 'hero,about,projects,skills,experience,education,contact',
   hidden_sections: '',
+  section_titles: '{}',
 };
 
 function themeSettingsToCamel(row: ThemeSettings) {
@@ -674,6 +676,7 @@ function themeSettingsToCamel(row: ThemeSettings) {
     layoutMode: row.layout_mode || 'separate',
     sectionOrder: row.section_order || 'hero,about,projects,skills,experience,education,contact',
     hiddenSections: row.hidden_sections || '',
+    sectionTitles: row.section_titles || '{}',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -699,6 +702,7 @@ export async function getThemeSettings() {
       layoutMode: DEFAULT_THEME.layout_mode,
       sectionOrder: DEFAULT_THEME.section_order,
       hiddenSections: DEFAULT_THEME.hidden_sections,
+      sectionTitles: DEFAULT_THEME.section_titles,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -715,6 +719,7 @@ export async function updateThemeSettings(input: {
   layoutMode?: string;
   sectionOrder?: string;
   hiddenSections?: string;
+  sectionTitles?: string;
 }) {
   const sb = getSupabaseAdmin();
   const snakeData: Record<string, any> = {};
@@ -726,6 +731,7 @@ export async function updateThemeSettings(input: {
   if (input.layoutMode !== undefined) snakeData.layout_mode = input.layoutMode;
   if (input.sectionOrder !== undefined) snakeData.section_order = input.sectionOrder;
   if (input.hiddenSections !== undefined) snakeData.hidden_sections = input.hiddenSections;
+  if (input.sectionTitles !== undefined) snakeData.section_titles = input.sectionTitles;
   snakeData.updated_at = new Date().toISOString();
 
   // Get existing row
@@ -743,6 +749,7 @@ export async function updateThemeSettings(input: {
         layout_mode: input.layoutMode || DEFAULT_THEME.layout_mode,
         section_order: input.sectionOrder || DEFAULT_THEME.section_order,
         hidden_sections: input.hiddenSections || DEFAULT_THEME.hidden_sections,
+        section_titles: input.sectionTitles || DEFAULT_THEME.section_titles,
       })
       .select()
       .single();
@@ -770,6 +777,7 @@ export async function resetThemeSettings() {
     layoutMode: DEFAULT_THEME.layout_mode,
     sectionOrder: DEFAULT_THEME.section_order,
     hiddenSections: DEFAULT_THEME.hidden_sections,
+    sectionTitles: DEFAULT_THEME.section_titles,
   });
 }
 

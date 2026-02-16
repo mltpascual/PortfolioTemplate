@@ -46,11 +46,21 @@ export default function Home() {
   const layoutMode = theme?.layoutMode || DEFAULT_THEME.layoutMode;
   const sectionOrder = theme?.sectionOrder || DEFAULT_SECTION_ORDER;
   const hiddenSectionsStr = theme?.hiddenSections || "";
+  const sectionTitlesStr = theme?.sectionTitles || "{}";
 
   // Parse hidden sections
   const hiddenSections = useMemo(() => {
     return new Set(hiddenSectionsStr.split(",").map((s: string) => s.trim()).filter(Boolean));
   }, [hiddenSectionsStr]);
+
+  // Parse custom section titles
+  const sectionTitles = useMemo(() => {
+    try {
+      return JSON.parse(sectionTitlesStr) as Record<string, string>;
+    } catch {
+      return {} as Record<string, string>;
+    }
+  }, [sectionTitlesStr]);
 
   // Parse section order into array — ALL hooks must be called before any early return
   const sections = useMemo(() => {
@@ -104,6 +114,7 @@ export default function Home() {
           experiences={portfolio.experiences}
           education={portfolio.education}
           tabOrder={visibleCombinedTabOrder}
+          customTitle={sectionTitles.combined}
         />
       );
     }
@@ -112,17 +123,17 @@ export default function Home() {
       case "hero":
         return <HeroSection key="hero" profile={portfolio.profile} />;
       case "about":
-        return <AboutSection key="about" profile={portfolio.profile} />;
+        return <AboutSection key="about" profile={portfolio.profile} customTitle={sectionTitles.about} />;
       case "projects":
-        return <ProjectsSection key="projects" projects={portfolio.projects} />;
+        return <ProjectsSection key="projects" projects={portfolio.projects} customTitle={sectionTitles.projects} />;
       case "skills":
-        return <SkillsSection key="skills" skills={portfolio.skills} />;
+        return <SkillsSection key="skills" skills={portfolio.skills} customTitle={sectionTitles.skills} />;
       case "experience":
-        return <ExperienceSection key="experience" experiences={portfolio.experiences} />;
+        return <ExperienceSection key="experience" experiences={portfolio.experiences} customTitle={sectionTitles.experience} />;
       case "education":
-        return <EducationSection key="education" education={portfolio.education} />;
+        return <EducationSection key="education" education={portfolio.education} customTitle={sectionTitles.education} />;
       case "contact":
-        return <ContactSection key="contact" profile={portfolio.profile} />;
+        return <ContactSection key="contact" profile={portfolio.profile} customTitle={sectionTitles.contact} />;
       default:
         return null;
     }

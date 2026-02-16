@@ -10,9 +10,10 @@ const ABOUT_IMAGE = "https://private-us-east-1.manuscdn.com/sessionFile/td3PawS2
 
 interface AboutSectionProps {
   profile: PortfolioData["profile"];
+  customTitle?: string;
 }
 
-export default function AboutSection({ profile }: AboutSectionProps) {
+export default function AboutSection({ profile, customTitle }: AboutSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -53,7 +54,7 @@ export default function AboutSection({ profile }: AboutSectionProps) {
             className="text-sm font-semibold tracking-widest uppercase text-terracotta"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            About Me
+            {customTitle || "About Me"}
           </span>
         </div>
 

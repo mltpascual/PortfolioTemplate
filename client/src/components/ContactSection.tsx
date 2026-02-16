@@ -12,9 +12,10 @@ import type { PortfolioData } from "@/hooks/usePortfolio";
 
 interface ContactSectionProps {
   profile: PortfolioData["profile"];
+  customTitle?: string;
 }
 
-export default function ContactSection({ profile }: ContactSectionProps) {
+export default function ContactSection({ profile, customTitle }: ContactSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
   const [name, setName] = useState("");
@@ -84,7 +85,7 @@ export default function ContactSection({ profile }: ContactSectionProps) {
             className="text-sm font-semibold tracking-widest uppercase text-terracotta mb-4 block"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            Get in Touch
+            {customTitle || "Get in Touch"}
           </span>
           <h2
             className="text-4xl md:text-5xl text-charcoal leading-tight max-w-xl"

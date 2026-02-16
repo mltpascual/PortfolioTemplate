@@ -36,9 +36,11 @@ interface CombinedSectionProps {
   education: PortfolioData["education"];
   /** Order of the combined tabs, derived from sectionOrder. Defaults to ["skills","experience","education"]. */
   tabOrder?: Tab[];
+  /** Custom title for the combined section header */
+  customTitle?: string;
 }
 
-export default function CombinedSection({ skills, experiences, education, tabOrder }: CombinedSectionProps) {
+export default function CombinedSection({ skills, experiences, education, tabOrder, customTitle }: CombinedSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
   const firstTab = tabOrder?.[0] || "skills";
@@ -105,9 +107,11 @@ export default function CombinedSection({ skills, experiences, education, tabOrd
             className="text-4xl md:text-5xl text-charcoal leading-tight max-w-xl"
             style={{ fontFamily: "var(--font-display)" }}
           >
-            What I bring
-            <br />
-            <span className="text-terracotta italic">to the table.</span>
+            {customTitle ? (
+              <>{customTitle}</>  
+            ) : (
+              <>What I bring<br /><span className="text-terracotta italic">to the table.</span></>
+            )}
           </h2>
         </div>
 

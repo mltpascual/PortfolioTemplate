@@ -3,6 +3,7 @@
  * Clean footer with warm tones. Logo, nav links, social icons.
  */
 
+import { useEffect, useRef, useState } from "react";
 import { Github, Linkedin, Mail, Twitter } from "lucide-react";
 import type { PortfolioData } from "@/hooks/usePortfolio";
 
@@ -19,6 +20,20 @@ interface FooterProps {
 }
 
 export default function Footer({ profile }: FooterProps) {
+  const footerRef = useRef<HTMLElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) setVisible(true);
+      },
+      { threshold: 0.1 }
+    );
+    if (footerRef.current) observer.observe(footerRef.current);
+    return () => observer.disconnect();
+  }, []);
+
   const displayName = profile?.fullName || "Alex Chen";
   const githubUrl = profile?.githubUrl;
   const linkedinUrl = profile?.linkedinUrl;
@@ -33,7 +48,10 @@ export default function Footer({ profile }: FooterProps) {
   ];
 
   return (
-    <footer className="border-t border-warm-200 bg-warm-50/30">
+    <footer
+      ref={footerRef}
+      className={`border-t border-warm-200 bg-warm-50/30 transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
+    >
       <div className="container py-12 md:py-16">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-10">
           {/* Logo */}

@@ -9,7 +9,7 @@
  */
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { Menu, X, Settings, FileText } from "lucide-react";
+import { Menu, X, Settings, FileText, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useThemeSettings, DEFAULT_THEME } from "@/hooks/useThemeSettings";
 import type { PortfolioData } from "@/hooks/usePortfolio";
@@ -39,7 +39,7 @@ export default function Navbar({ profile, hiddenSections = new Set() }: NavbarPr
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string>("");
   const { user, isAuthenticated } = useAuth();
-  const { theme } = useThemeSettings();
+  const { theme, isDark, toggleDarkMode } = useThemeSettings();
   const isAdmin = isAuthenticated && user?.role === "admin";
   const scrollSpyRaf = useRef<number>(0);
 
@@ -259,10 +259,19 @@ export default function Navbar({ profile, hiddenSections = new Set() }: NavbarPr
           >
             Get in Touch
           </a>
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={toggleDarkMode}
+            className="ml-2 p-2 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all duration-200"
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            title={isDark ? "Light mode" : "Dark mode"}
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+          </button>
           {isAdmin && (
             <a
               href="/admin"
-              className="ml-2 p-2 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all duration-200"
+              className="ml-1 p-2 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all duration-200"
               aria-label="Admin Dashboard"
               title="Admin Dashboard"
             >
@@ -335,6 +344,17 @@ export default function Navbar({ profile, hiddenSections = new Set() }: NavbarPr
           >
             Get in Touch
           </a>
+          {/* Dark Mode Toggle - Mobile */}
+          <button
+            onClick={() => {
+              toggleDarkMode();
+              setMobileOpen(false);
+            }}
+            className="pill-outline-sm mt-3 w-full text-center gap-2"
+          >
+            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {isDark ? "Light Mode" : "Dark Mode"}
+          </button>
           {isAdmin && (
             <a
               href="/admin"

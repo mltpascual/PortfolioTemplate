@@ -38,9 +38,10 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
 
 interface SkillsSectionProps {
   skills: PortfolioData["skills"];
+  customTitle?: string;
 }
 
-export default function SkillsSection({ skills }: SkillsSectionProps) {
+export default function SkillsSection({ skills, customTitle }: SkillsSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -72,7 +73,7 @@ export default function SkillsSection({ skills }: SkillsSectionProps) {
             className="text-sm font-semibold tracking-widest uppercase text-terracotta mb-4 block"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            Skills & Expertise
+            {customTitle || "Skills & Expertise"}
           </span>
           <h2
             className="text-4xl md:text-5xl text-charcoal leading-tight max-w-xl"

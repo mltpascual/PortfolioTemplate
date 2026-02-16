@@ -1,5 +1,5 @@
 import { trpc } from "@/lib/trpc";
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 export type ThemeSettingsData = {
   id: number;
@@ -11,6 +11,7 @@ export type ThemeSettingsData = {
   layoutMode: string;
   sectionOrder: string;
   hiddenSections: string;
+  sectionTitles: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -25,6 +26,7 @@ export const DEFAULT_THEME = {
   layoutMode: "separate",
   sectionOrder: "hero,about,projects,skills,experience,education,contact",
   hiddenSections: "",
+  sectionTitles: "{}",
 };
 
 // Curated font list for the selector
@@ -259,6 +261,16 @@ export function useThemeSettings() {
     staleTime: 5 * 60 * 1000,
   });
 
+  // Local dark mode override (localStorage) — allows visitor toggle without DB write
+  const [localDarkMode, setLocalDarkMode] = useState<boolean | null>(() => {
+    if (typeof window === "undefined") return null;
+    const stored = localStorage.getItem("portfolio-dark-mode");
+    return stored !== null ? stored === "true" : null;
+  });
+
+  // Determine effective dark mode: local override > DB setting
+  const isDark = localDarkMode !== null ? localDarkMode : (data?.darkMode ?? DEFAULT_THEME.darkMode);
+
   useEffect(() => {
     if (data) {
       applyThemeToDOM({
@@ -266,12 +278,30 @@ export function useThemeSettings() {
         accentColorHover: data.accentColorHover || DEFAULT_THEME.accentColorHover,
         headingFont: data.headingFont || DEFAULT_THEME.headingFont,
         bodyFont: data.bodyFont || DEFAULT_THEME.bodyFont,
-        darkMode: data.darkMode ?? DEFAULT_THEME.darkMode,
+        darkMode: isDark,
       });
     }
+  }, [data, isDark]);
+
+  const toggleDarkMode = useCallback(() => {
+    setLocalDarkMode((prev: boolean | null) => {
+      const next = prev !== null ? !prev : !(data?.darkMode ?? DEFAULT_THEME.darkMode);
+      localStorage.setItem("portfolio-dark-mode", String(next));
+      // Immediately apply
+      if (data) {
+        applyThemeToDOM({
+          accentColor: data.accentColor || DEFAULT_THEME.accentColor,
+          accentColorHover: data.accentColorHover || DEFAULT_THEME.accentColorHover,
+          headingFont: data.headingFont || DEFAULT_THEME.headingFont,
+          bodyFont: data.bodyFont || DEFAULT_THEME.bodyFont,
+          darkMode: next,
+        });
+      }
+      return next;
+    });
   }, [data]);
 
-  return { theme: data, isLoading, error };
+  return { theme: data, isLoading, error, isDark, toggleDarkMode };
 }
 
 export { hexToOklchApprox, darkenHex, lightenHex, applyThemeToDOM, loadGoogleFont };

@@ -187,9 +187,10 @@ function ProjectCard({ project, index }: { project: PortfolioData["projects"][nu
 /* ── Projects Section ──────────────────────────────────────────── */
 interface ProjectsSectionProps {
   projects: PortfolioData["projects"];
+  customTitle?: string;
 }
 
-export default function ProjectsSection({ projects }: ProjectsSectionProps) {
+export default function ProjectsSection({ projects, customTitle }: ProjectsSectionProps) {
   const { ref: headerRef, visible: headerVisible } = useInView();
 
   return (
@@ -206,7 +207,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
             className="text-sm font-semibold tracking-widest uppercase text-terracotta mb-4 block"
             style={{ fontFamily: "var(--font-body)" }}
           >
-            Selected Work
+            {customTitle || "Selected Work"}
           </span>
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <h2

@@ -27,6 +27,10 @@ vi.mock("@supabase/supabase-js", () => ({
           heading_font: "DM Serif Display",
           body_font: "DM Sans",
           dark_mode: false,
+          layout_mode: "separate",
+          section_order: "hero,about,projects,skills,experience,education,contact",
+          hidden_sections: "",
+          section_titles: null,
           created_at: "2026-01-01T00:00:00.000Z",
           updated_at: "2026-01-01T00:00:00.000Z",
         },
@@ -126,6 +130,34 @@ describe("Theme Settings", () => {
       });
 
       expect(result).toHaveProperty("darkMode");
+    });
+
+    it("should accept sectionTitles update", async () => {
+      const sectionTitles = JSON.stringify({
+        about: "My Story",
+        projects: "My Work",
+        skills: "Tech Stack",
+      });
+
+      const result = await updateThemeSettings({
+        sectionTitles,
+      });
+
+      expect(result).toHaveProperty("sectionTitles");
+    });
+
+    it("should accept layout settings with sectionTitles", async () => {
+      const result = await updateThemeSettings({
+        layoutMode: "combined",
+        sectionOrder: "hero,about,skills,experience,education,projects,contact",
+        hiddenSections: "education",
+        sectionTitles: JSON.stringify({ about: "About Me Custom" }),
+      });
+
+      expect(result).toHaveProperty("layoutMode");
+      expect(result).toHaveProperty("sectionOrder");
+      expect(result).toHaveProperty("hiddenSections");
+      expect(result).toHaveProperty("sectionTitles");
     });
   });
 

@@ -270,4 +270,14 @@
 - [x] Update Navbar to skip hidden section links
 - [x] Add scroll-spy to navbar (highlight active section on scroll, terracotta highlight)
 - [x] Add smooth scrolling behavior (CSS smooth-scroll already set, all nav clicks use smooth scroll)
+- [x] Push to GitHub
+
+## Phase 33: Custom Section Titles, Dark Mode, Scroll Animations
+- [x] Add section_titles column to Supabase theme_settings
+- [x] Update server db.ts and routers.ts for section_titles
+- [x] Add section title editing UI in admin panel
+- [x] Update all section components to use custom titles
+- [x] Implement dark mode color scheme in index.css
+- [x] Add dark mode toggle to navbar
+- [x] Add scroll animations (fade-in/slide-up) to all sections
 - [ ] Push to GitHub
