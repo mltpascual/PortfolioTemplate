@@ -374,6 +374,20 @@ export async function deleteProject(id: number) {
   if (error) { console.error('[DB] Failed to delete project:', error.message); throw new Error('Failed to delete project'); }
 }
 
+export async function reorderProjects(items: Array<{ id: number; sortOrder: number }>) {
+  const sb = getSupabaseAdmin();
+  // Update each project's sort_order individually
+  const promises = items.map((item) =>
+    sb.from("projects").update({ sort_order: item.sortOrder }).eq("id", item.id)
+  );
+  const results = await Promise.all(promises);
+  const failed = results.find((r) => r.error);
+  if (failed?.error) {
+    console.error('[DB] Failed to reorder projects:', failed.error.message);
+    throw new Error('Failed to reorder projects');
+  }
+}
+
 // ==========================================
 // EXPERIENCES (Supabase)
 // ==========================================

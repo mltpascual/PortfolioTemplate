@@ -33,6 +33,9 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
+  // Trust proxy (behind reverse proxy in production)
+  app.set('trust proxy', 1);
+
   // ==========================================
   // SECURITY: Helmet sets secure HTTP headers
   // ==========================================

@@ -142,5 +142,13 @@
 - [x] Add project tile arrangement to admin (square, rectangle, masonry grid styles)
 - [x] Clean unused markdown files from project
 - [ ] Run master orchestrator for project documentation
-- [ ] Set up E2E testing with Playwright
+- [x] Set up E2E testing with Playwright
 - [ ] Push to GitHub and verify on Vercel
+
+## Phase 19: Tile Sizes, E2E Testing, Drag-and-Drop Reorder
+- [x] Assign varied tile sizes to existing projects for a dynamic grid layout
+- [x] Set up E2E testing with Playwright (install, configure, write tests)
+- [x] E2E tests: login flow, admin CRUD, contact form submission, public portfolio rendering
+- [x] Add drag-and-drop reordering in admin project list (replace manual sort_order editing)
+- [x] Write vitest tests for new drag-and-drop reorder endpoint
+- [ ] Push to GitHub and verify

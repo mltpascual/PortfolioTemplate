@@ -196,7 +196,7 @@ function OverlayTileCard({ project, index }: { project: PortfolioData["projects"
         imageUrl={project.imageUrl}
         title={project.title}
         fallbackIndex={index}
-        displayMode={(project as any).displayMode || "live"}
+        displayMode={project.displayMode || "live"}
         className="absolute inset-0"
       />
 
@@ -283,8 +283,8 @@ function StackedTileCard({ project, index, tileSize }: { project: PortfolioData[
           imageUrl={project.imageUrl}
           title={project.title}
           fallbackIndex={index}
-          displayMode={(project as any).displayMode || "live"}
-        />
+        displayMode={project.displayMode || "live"}
+      />
       </div>
 
       {/* Content */}
@@ -396,7 +396,7 @@ export default function ProjectsSection({ projects }: ProjectsSectionProps) {
         {/* Tile Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 auto-rows-auto">
           {projects.map((project, i) => {
-            const tileSize = (project as any).tileSize || "medium";
+            const tileSize = project.tileSize || "medium";
             const { gridClass, aspectClass, layout } = getTileClasses(tileSize);
 
             return (

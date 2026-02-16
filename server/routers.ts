@@ -185,6 +185,21 @@ export const appRouter = router({
         await db.deleteProject(input.id);
         return { success: true };
       }),
+    reorder: adminProcedure
+      .input(
+        z.object({
+          items: z.array(
+            z.object({
+              id: z.number().int().positive(),
+              sortOrder: z.number().min(0).max(9999),
+            })
+          ).min(1).max(100),
+        })
+      )
+      .mutation(async ({ input }) => {
+        await db.reorderProjects(input.items);
+        return { success: true };
+      }),
   }),
 
   // ==========================================

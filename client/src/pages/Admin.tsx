@@ -8,7 +8,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { getLoginUrl } from "@/const";
 import { trpc } from "@/lib/trpc";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import {
   ArrowLeft,
@@ -26,6 +26,22 @@ import {
   Palette,
   RotateCcw,
 } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { SortableProjectItem } from "@/components/SortableProjectItem";
 
 // ============================================================
 // PROFILE TAB
@@ -194,6 +210,15 @@ function ProjectsTab() {
     onError: (err) => toast.error(err.message),
   });
 
+  const reorderProjects = trpc.adminProjects.reorder.useMutation({
+    onSuccess: () => {
+      toast.success("Order saved!");
+      utils.adminProjects.list.invalidate();
+      utils.portfolio.getAll.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const [editing, setEditing] = useState<number | "new" | null>(null);
   const [form, setForm] = useState({
     title: "",
@@ -207,6 +232,28 @@ function ProjectsTab() {
     tileSize: "medium" as string,
     sortOrder: 0,
   });
+
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id || !projects) return;
+
+      const oldIndex = projects.findIndex((p) => p.id === active.id);
+      const newIndex = projects.findIndex((p) => p.id === over.id);
+      if (oldIndex === -1 || newIndex === -1) return;
+
+      const reordered = arrayMove([...projects], oldIndex, newIndex);
+      const items = reordered.map((p, i) => ({ id: p.id, sortOrder: i + 1 }));
+      reorderProjects.mutate({ items });
+    },
+    [projects, reorderProjects]
+  );
 
   const startEdit = (project: any) => {
     setEditing(project.id);
@@ -331,53 +378,41 @@ function ProjectsTab() {
         </div>
       )}
 
-      {/* Project List */}
-      <div className="space-y-3">
-        {projects?.map((project) => (
-          <div key={project.id} className="warm-card p-4 flex items-center gap-4">
-            <GripVertical className="w-4 h-4 text-warm-300 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <h4 className="text-base text-charcoal truncate" style={{ fontFamily: "var(--font-display)" }}>
-                  {project.title}
-                </h4>
-                {project.featured === 1 && (
-                  <span className="text-xs px-2 py-0.5 rounded-full bg-terracotta/10 text-terracotta font-medium">Featured</span>
-                )}
-                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                  project.displayMode === "image" ? "bg-warm-200/60 text-charcoal-light" : "bg-green-100 text-green-700"
-                }`}>
-                  {project.displayMode === "image" ? "Image" : "Live"}
-                </span>
-                <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-blue-50 text-blue-600 capitalize">
-                  {(project as any).tileSize || "medium"}
-                </span>
-              </div>
-              <p className="text-sm text-charcoal-light truncate" style={{ fontFamily: "var(--font-body)" }}>
-                {project.description || "No description"}
-              </p>
+      {/* Drag-and-Drop Project List */}
+      {projects && projects.length > 0 ? (
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={projects.map((p) => p.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            <div className="space-y-3">
+              {projects.map((project) => (
+                <SortableProjectItem
+                  key={project.id}
+                  project={project as any}
+                  onEdit={startEdit}
+                  onDelete={(id) => deleteProject.mutate({ id })}
+                />
+              ))}
             </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <button onClick={() => startEdit(project)} className="p-2 rounded-full hover:bg-warm-100 transition-colors" title="Edit">
-                <Pencil className="w-4 h-4 text-charcoal-light" />
-              </button>
-              <button
-                onClick={() => { if (confirm("Delete this project?")) deleteProject.mutate({ id: project.id }); }}
-                className="p-2 rounded-full hover:bg-red-50 transition-colors"
-                title="Delete"
-              >
-                <Trash2 className="w-4 h-4 text-red-400" />
-              </button>
+          </SortableContext>
+          {reorderProjects.isPending && (
+            <div className="flex items-center justify-center gap-2 py-2 text-sm text-charcoal-light">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Saving order...
             </div>
-          </div>
-        ))}
-        {(!projects || projects.length === 0) && (
-          <div className="text-center py-12 text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
-            <FolderOpen className="w-10 h-10 mx-auto mb-3 text-warm-300" />
-            <p>No projects yet. Add your first project above.</p>
-          </div>
-        )}
-      </div>
+          )}
+        </DndContext>
+      ) : (
+        <div className="text-center py-12 text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
+          <FolderOpen className="w-10 h-10 mx-auto mb-3 text-warm-300" />
+          <p>No projects yet. Add your first project above.</p>
+        </div>
+      )}
     </div>
   );
 }
