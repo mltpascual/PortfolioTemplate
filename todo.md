@@ -72,3 +72,12 @@
 - [x] Set GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET, GITHUB_OWNER_USERNAME env vars
 - [x] All 19 tests passing (auth + supabase + service_role + github-oauth + portfolio CRUD)
 - [ ] Update README with self-hosting instructions
+
+## Phase 11: Deploy to Vercel
+- [ ] Read Vercel deploy skill
+- [ ] Adapt Express server for Vercel serverless
+- [ ] Create vercel.json configuration
+- [ ] Deploy to Vercel
+- [ ] Set environment variables on Vercel
+- [ ] Update GitHub OAuth callback URL to production domain
+- [ ] Test the full auth flow on production
