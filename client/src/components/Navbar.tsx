@@ -4,24 +4,29 @@
  * Pill-shaped nav links with warm hover states.
  * Layout-mode aware: in combined mode, Skills/Experience/Education links
  * scroll to the combined section and activate the correct pill tab.
+ * Nav link order follows the sectionOrder from theme settings.
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Menu, X, Settings, FileText } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useThemeSettings, DEFAULT_THEME } from "@/hooks/useThemeSettings";
 import type { PortfolioData } from "@/hooks/usePortfolio";
 
-const allNavLinks = [
-  { label: "About", href: "#about", sectionId: "about" },
-  { label: "Skills", href: "#skills", sectionId: "skills" },
-  { label: "Projects", href: "#projects", sectionId: "projects" },
-  { label: "Experience", href: "#experience", sectionId: "experience" },
-  { label: "Education", href: "#education", sectionId: "education" },
-  { label: "Contact", href: "#contact", sectionId: "contact" },
-];
+const NAV_LINK_MAP: Record<string, { label: string; href: string }> = {
+  about: { label: "About", href: "#about" },
+  skills: { label: "Skills", href: "#skills" },
+  projects: { label: "Projects", href: "#projects" },
+  experience: { label: "Experience", href: "#experience" },
+  education: { label: "Education", href: "#education" },
+  contact: { label: "Contact", href: "#contact" },
+};
 
+// Sections that are excluded from the navbar (hero has no nav link)
+const EXCLUDED_SECTIONS = new Set(["hero"]);
 const COMBINED_SECTIONS = new Set(["skills", "experience", "education"]);
+
+const DEFAULT_SECTION_ORDER = "hero,about,projects,skills,experience,education,contact";
 
 interface NavbarProps {
   profile: PortfolioData["profile"];
@@ -35,6 +40,7 @@ export default function Navbar({ profile }: NavbarProps) {
   const isAdmin = isAuthenticated && user?.role === "admin";
 
   const layoutMode = theme?.layoutMode || DEFAULT_THEME.layoutMode;
+  const sectionOrder = theme?.sectionOrder || DEFAULT_SECTION_ORDER;
   const isCombined = layoutMode === "combined";
 
   useEffect(() => {
@@ -46,25 +52,47 @@ export default function Navbar({ profile }: NavbarProps) {
   const displayName = profile?.fullName || "Alex Chen";
   const resumeUrl = profile?.resumeUrl;
 
-  // In combined mode, we only show one link for the combined group
-  // and filter out the duplicate experience/education links
-  const navLinks = (() => {
-    if (!isCombined) return allNavLinks;
+  // Build nav links dynamically from sectionOrder
+  const navLinks = useMemo(() => {
+    const sections = sectionOrder
+      .split(",")
+      .map((s: string) => s.trim())
+      .filter(Boolean);
 
+    const links: { sectionId: string; label: string; href: string }[] = [];
     let combinedShown = false;
-    return allNavLinks.filter((link) => {
-      if (COMBINED_SECTIONS.has(link.sectionId)) {
-        if (combinedShown) return false;
+
+    for (const sectionId of sections) {
+      // Skip sections that don't have nav links
+      if (EXCLUDED_SECTIONS.has(sectionId)) continue;
+
+      const meta = NAV_LINK_MAP[sectionId];
+      if (!meta) continue;
+
+      // In combined mode, show only one link for the combined group
+      if (isCombined && COMBINED_SECTIONS.has(sectionId)) {
+        if (combinedShown) continue;
         combinedShown = true;
-        return true; // Keep the first one (Skills) as the combined link
+        links.push({
+          sectionId,
+          label: "Skills & More",
+          href: "#skills",
+        });
+      } else {
+        links.push({
+          sectionId,
+          label: meta.label,
+          href: meta.href,
+        });
       }
-      return true;
-    });
-  })();
+    }
+
+    return links;
+  }, [sectionOrder, isCombined]);
 
   // Handle nav link click — in combined mode, dispatch a custom event
   // to switch the active pill tab in the CombinedSection
-  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, link: typeof allNavLinks[0]) => {
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, link: typeof navLinks[0]) => {
     if (isCombined && COMBINED_SECTIONS.has(link.sectionId)) {
       e.preventDefault();
 
@@ -82,15 +110,6 @@ export default function Navbar({ profile }: NavbarProps) {
       );
     }
     setMobileOpen(false);
-  };
-
-  // Get the display label for nav links
-  const getLabel = (link: typeof allNavLinks[0]) => {
-    // In combined mode, the first combined link shows as "Skills & More"
-    if (isCombined && COMBINED_SECTIONS.has(link.sectionId)) {
-      return "Skills & More";
-    }
-    return link.label;
   };
 
   return (
@@ -121,7 +140,7 @@ export default function Navbar({ profile }: NavbarProps) {
               className="px-4 py-2 text-sm font-medium text-charcoal-light rounded-full transition-all duration-200 hover:bg-warm-100 hover:text-terracotta-dark"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              {getLabel(link)}
+              {link.label}
             </a>
           ))}
           {resumeUrl && (
@@ -176,7 +195,7 @@ export default function Navbar({ profile }: NavbarProps) {
               className="block py-3 text-base font-medium text-charcoal-light hover:text-terracotta-dark transition-colors"
               style={{ fontFamily: "var(--font-body)" }}
             >
-              {getLabel(link)}
+              {link.label}
             </a>
           ))}
           {resumeUrl && (

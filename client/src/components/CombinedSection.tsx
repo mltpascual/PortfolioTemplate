@@ -34,12 +34,15 @@ interface CombinedSectionProps {
   skills: PortfolioData["skills"];
   experiences: PortfolioData["experiences"];
   education: PortfolioData["education"];
+  /** Order of the combined tabs, derived from sectionOrder. Defaults to ["skills","experience","education"]. */
+  tabOrder?: Tab[];
 }
 
-export default function CombinedSection({ skills, experiences, education }: CombinedSectionProps) {
+export default function CombinedSection({ skills, experiences, education, tabOrder }: CombinedSectionProps) {
   const sectionRef = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("skills");
+  const firstTab = tabOrder?.[0] || "skills";
+  const [activeTab, setActiveTab] = useState<Tab>(firstTab);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -64,11 +67,16 @@ export default function CombinedSection({ skills, experiences, education }: Comb
     return () => window.removeEventListener("combined-tab-switch", handleTabSwitch);
   }, []);
 
-  const tabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
+  const allTabs: { key: Tab; label: string; icon: React.ReactNode }[] = [
     { key: "skills", label: "Skills", icon: <Code2 className="w-4 h-4" /> },
     { key: "experience", label: "Experience", icon: <Briefcase className="w-4 h-4" /> },
     { key: "education", label: "Education", icon: <GraduationCap className="w-4 h-4" /> },
   ];
+
+  // Reorder tabs based on the tabOrder prop (derived from admin sectionOrder)
+  const tabs = tabOrder
+    ? tabOrder.map((key) => allTabs.find((t) => t.key === key)!).filter(Boolean)
+    : allTabs;
 
   return (
     <section

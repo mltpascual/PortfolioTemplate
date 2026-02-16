@@ -229,3 +229,9 @@
 - [x] Diagnose and fix image upload error ("Unexpected token '<' is not valid JSON")
   - Fixed: Auth check used ownerOpenId (Manus OAuth) instead of user.role (GitHub OAuth)
   - Fixed: Client-side error handling now safely parses non-JSON responses
+
+## Bug Fix: Pill Tab Arrangement Mismatch (Admin vs Homepage)
+- [x] Fix pill tab order mismatch between admin panel section arrangement and homepage rendering
+  - Navbar now dynamically orders links based on sectionOrder from theme settings
+  - CombinedSection pill tabs now accept tabOrder prop and follow admin arrangement
+  - Fixed React hooks ordering error (useMemo before early return)

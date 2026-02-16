@@ -21,10 +21,10 @@ import CombinedSection from "@/components/CombinedSection";
 import Footer from "@/components/Footer";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { useThemeSettings, DEFAULT_THEME } from "@/hooks/useThemeSettings";
-import { trpc } from "@/lib/trpc";
 import { useMemo } from "react";
 
 const DEFAULT_SECTION_ORDER = "hero,about,projects,skills,experience,education,contact";
+const COMBINED_IDS = new Set(["skills", "experience", "education"]);
 
 function LoadingSkeleton() {
   return (
@@ -46,7 +46,7 @@ export default function Home() {
   const layoutMode = theme?.layoutMode || DEFAULT_THEME.layoutMode;
   const sectionOrder = theme?.sectionOrder || DEFAULT_SECTION_ORDER;
 
-  // Parse section order into array
+  // Parse section order into array — ALL hooks must be called before any early return
   const sections = useMemo(() => {
     return sectionOrder
       .split(",")
@@ -54,19 +54,23 @@ export default function Home() {
       .filter(Boolean);
   }, [sectionOrder]);
 
+  // Extract the order of combined tabs from the section order
+  const combinedTabOrder = useMemo(() => {
+    return sections.filter((s: string) => COMBINED_IDS.has(s)) as ("skills" | "experience" | "education")[];
+  }, [sections]);
+
+  // Early return AFTER all hooks
   if (isLoading || !portfolio) {
     return <LoadingSkeleton />;
   }
 
   // In combined mode, skills/experience/education are merged into one "combined" section.
-  // We skip individual skills/experience/education sections and render CombinedSection instead.
   const isCombined = layoutMode === "combined";
-  const combinedSectionIds = new Set(["skills", "experience", "education"]);
   let combinedRendered = false;
 
   const renderSection = (sectionId: string) => {
     // In combined mode, replace the first occurrence of skills/experience/education with CombinedSection
-    if (isCombined && combinedSectionIds.has(sectionId)) {
+    if (isCombined && COMBINED_IDS.has(sectionId)) {
       if (combinedRendered) return null; // Already rendered
       combinedRendered = true;
       return (
@@ -75,6 +79,7 @@ export default function Home() {
           skills={portfolio.skills}
           experiences={portfolio.experiences}
           education={portfolio.education}
+          tabOrder={combinedTabOrder}
         />
       );
     }
