@@ -481,7 +481,8 @@ var DEFAULT_THEME = {
   accent_color: "#B85C38",
   accent_color_hover: "#9A4A2E",
   heading_font: "DM Serif Display",
-  body_font: "DM Sans"
+  body_font: "DM Sans",
+  dark_mode: false
 };
 function themeSettingsToCamel(row) {
   return {
@@ -490,6 +491,7 @@ function themeSettingsToCamel(row) {
     accentColorHover: row.accent_color_hover,
     headingFont: row.heading_font,
     bodyFont: row.body_font,
+    darkMode: row.dark_mode ?? false,
     createdAt: row.created_at,
     updatedAt: row.updated_at
   };
@@ -504,6 +506,7 @@ async function getThemeSettings() {
       accentColorHover: DEFAULT_THEME.accent_color_hover,
       headingFont: DEFAULT_THEME.heading_font,
       bodyFont: DEFAULT_THEME.body_font,
+      darkMode: DEFAULT_THEME.dark_mode,
       createdAt: (/* @__PURE__ */ new Date()).toISOString(),
       updatedAt: (/* @__PURE__ */ new Date()).toISOString()
     };
@@ -517,6 +520,7 @@ async function updateThemeSettings(input) {
   if (input.accentColorHover !== void 0) snakeData.accent_color_hover = input.accentColorHover;
   if (input.headingFont !== void 0) snakeData.heading_font = input.headingFont;
   if (input.bodyFont !== void 0) snakeData.body_font = input.bodyFont;
+  if (input.darkMode !== void 0) snakeData.dark_mode = input.darkMode;
   snakeData.updated_at = (/* @__PURE__ */ new Date()).toISOString();
   const existing = await getThemeSettings();
   if (existing.id === 0) {
@@ -524,7 +528,8 @@ async function updateThemeSettings(input) {
       accent_color: input.accentColor || DEFAULT_THEME.accent_color,
       accent_color_hover: input.accentColorHover || DEFAULT_THEME.accent_color_hover,
       heading_font: input.headingFont || DEFAULT_THEME.heading_font,
-      body_font: input.bodyFont || DEFAULT_THEME.body_font
+      body_font: input.bodyFont || DEFAULT_THEME.body_font,
+      dark_mode: input.darkMode ?? DEFAULT_THEME.dark_mode
     }).select().single();
     if (error) throw new Error(`Failed to create theme settings: ${error.message}`);
     return themeSettingsToCamel(data);
@@ -539,7 +544,8 @@ async function resetThemeSettings() {
     accentColor: DEFAULT_THEME.accent_color,
     accentColorHover: DEFAULT_THEME.accent_color_hover,
     headingFont: DEFAULT_THEME.heading_font,
-    bodyFont: DEFAULT_THEME.body_font
+    bodyFont: DEFAULT_THEME.body_font,
+    darkMode: DEFAULT_THEME.dark_mode
   });
 }
 async function getFullPortfolio() {
@@ -596,7 +602,8 @@ var appRouter = router({
         accentColor: z2.string().optional(),
         accentColorHover: z2.string().optional(),
         headingFont: z2.string().optional(),
-        bodyFont: z2.string().optional()
+        bodyFont: z2.string().optional(),
+        darkMode: z2.boolean().optional()
       })
     ).mutation(async ({ input }) => {
       return updateThemeSettings(input);
