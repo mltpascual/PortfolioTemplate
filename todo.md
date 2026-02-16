@@ -203,3 +203,13 @@
 - [x] Add logo upload UI to Education tab in admin (modal form)
 - [x] Add logo upload UI to Experience tab in admin (modal form)
 - [x] Display logos in public Education and Experience sections
+
+## Phase 29: Combined Pill-Tab Section + Section Arrangement
+- [x] Create CombinedSection component (Skills/Experience/Education with pill tab navigation)
+- [x] Add admin toggle: "Combined Pill Tabs" vs "Separate Sections" layout mode
+- [x] Store layout_mode setting in database (theme_settings table — layout_mode and section_order columns)
+- [x] Implement drag-and-drop section arrangement in admin panel (reorder Hero, About, Projects, etc.)
+- [x] Store section order in database
+- [x] Wire Home.tsx to dynamically render sections based on layout mode and section order
+- [x] Test and verify all combinations work (76 tests passing)
+- [ ] Push to GitHub

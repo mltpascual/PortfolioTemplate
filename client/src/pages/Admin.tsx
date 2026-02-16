@@ -34,6 +34,9 @@ import {
   LogOut,
   ChevronDown,
   GraduationCap,
+  LayoutGrid,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import {
   DndContext,
@@ -49,7 +52,10 @@ import {
   SortableContext,
   sortableKeyboardCoordinates,
   rectSortingStrategy,
+  verticalListSortingStrategy,
+  useSortable,
 } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { SortableProjectItem } from "@/components/SortableProjectItem";
 import {
   Dialog,
@@ -1545,6 +1551,329 @@ function ThemeTab() {
 }
 
 // ============================================================
+// LAYOUT TAB
+// ============================================================
+const SECTION_LABELS: Record<string, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
+  hero: { label: "Hero", icon: User },
+  about: { label: "About", icon: User },
+  projects: { label: "Projects", icon: FolderOpen },
+  skills: { label: "Skills", icon: Wrench },
+  experience: { label: "Experience", icon: Briefcase },
+  education: { label: "Education", icon: GraduationCap },
+  contact: { label: "Contact", icon: Eye },
+};
+
+const DEFAULT_SECTION_ORDER = "hero,about,projects,skills,experience,education,contact";
+
+function SortableSectionItem({ id, index, total, onMoveUp, onMoveDown }: {
+  id: string;
+  index: number;
+  total: number;
+  onMoveUp: () => void;
+  onMoveDown: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+    zIndex: isDragging ? 50 : "auto" as any,
+  };
+
+  const meta = SECTION_LABELS[id] || { label: id, icon: LayoutGrid };
+  const Icon = meta.icon;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-center gap-3 p-4 rounded-xl border transition-all ${
+        isDragging
+          ? "bg-terracotta/5 border-terracotta/30 shadow-lg"
+          : "bg-white border-warm-200/60 hover:border-warm-300"
+      }`}
+    >
+      {/* Drag handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        className="p-1.5 rounded-lg hover:bg-warm-100 transition-colors cursor-grab active:cursor-grabbing touch-none"
+        aria-label="Drag to reorder"
+      >
+        <GripVertical className="w-4 h-4 text-charcoal-light" />
+      </button>
+
+      {/* Section info */}
+      <div className="flex items-center gap-3 flex-1">
+        <div className="w-9 h-9 rounded-xl bg-terracotta/8 flex items-center justify-center">
+          <Icon className="w-4 h-4 text-terracotta" />
+        </div>
+        <div>
+          <span className="text-sm font-medium text-charcoal" style={{ fontFamily: "var(--font-body)" }}>
+            {meta.label}
+          </span>
+          <span className="text-xs text-charcoal-light ml-2" style={{ fontFamily: "var(--font-body)" }}>
+            #{index + 1}
+          </span>
+        </div>
+      </div>
+
+      {/* Arrow buttons for manual reorder */}
+      <div className="flex items-center gap-1">
+        <button
+          onClick={onMoveUp}
+          disabled={index === 0}
+          className="p-1.5 rounded-lg hover:bg-warm-100 transition-colors disabled:opacity-30"
+          title="Move up"
+        >
+          <ArrowUp className="w-3.5 h-3.5 text-charcoal-light" />
+        </button>
+        <button
+          onClick={onMoveDown}
+          disabled={index === total - 1}
+          className="p-1.5 rounded-lg hover:bg-warm-100 transition-colors disabled:opacity-30"
+          title="Move down"
+        >
+          <ArrowDown className="w-3.5 h-3.5 text-charcoal-light" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function LayoutTab() {
+  const utils = trpc.useUtils();
+  const { data: theme, isLoading } = trpc.adminTheme.get.useQuery();
+  const updateMutation = trpc.adminTheme.update.useMutation({
+    onSuccess: () => {
+      utils.adminTheme.get.invalidate();
+      utils.theme.get.invalidate();
+      toast.success("Layout updated!");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const [layoutMode, setLayoutMode] = useState<"separate" | "combined">("separate");
+  const [sectionOrder, setSectionOrder] = useState<string[]>(
+    DEFAULT_SECTION_ORDER.split(",")
+  );
+  const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    if (theme && !initialized) {
+      setLayoutMode((theme.layoutMode as "separate" | "combined") || "separate");
+      const order = theme.sectionOrder || DEFAULT_SECTION_ORDER;
+      setSectionOrder(order.split(",").map((s: string) => s.trim()).filter(Boolean));
+      setInitialized(true);
+    }
+  }, [theme, initialized]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      const oldIndex = sectionOrder.indexOf(active.id as string);
+      const newIndex = sectionOrder.indexOf(over.id as string);
+      setSectionOrder(arrayMove(sectionOrder, oldIndex, newIndex));
+    }
+  };
+
+  const moveSection = (index: number, direction: "up" | "down") => {
+    const newIndex = direction === "up" ? index - 1 : index + 1;
+    if (newIndex < 0 || newIndex >= sectionOrder.length) return;
+    setSectionOrder(arrayMove(sectionOrder, index, newIndex));
+  };
+
+  const handleSave = () => {
+    updateMutation.mutate({
+      layoutMode,
+      sectionOrder: sectionOrder.join(","),
+    });
+  };
+
+  const handleReset = () => {
+    setLayoutMode("separate");
+    setSectionOrder(DEFAULT_SECTION_ORDER.split(","));
+  };
+
+  const isDefault =
+    layoutMode === "separate" &&
+    sectionOrder.join(",") === DEFAULT_SECTION_ORDER;
+
+  if (isLoading) return <LoadingSpinner />;
+
+  return (
+    <div className="space-y-8">
+      {/* Layout Mode Toggle */}
+      <div className="warm-card p-6 md:p-8">
+        <h3 className="text-xl text-charcoal mb-2" style={{ fontFamily: "var(--font-display)" }}>
+          Layout Mode
+        </h3>
+        <p className="text-sm text-charcoal-light mb-6" style={{ fontFamily: "var(--font-body)" }}>
+          Choose how Skills, Experience, and Education sections are displayed.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* Separate option */}
+          <button
+            onClick={() => setLayoutMode("separate")}
+            className={`p-5 rounded-2xl border-2 transition-all text-left ${
+              layoutMode === "separate"
+                ? "border-terracotta bg-terracotta/5 shadow-[0_2px_12px_var(--accent-hex,#B85C38)20]"
+                : "border-warm-200/60 hover:border-warm-300 bg-white"
+            }`}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                layoutMode === "separate" ? "bg-terracotta/15" : "bg-warm-100"
+              }`}>
+                <LayoutGrid className={`w-5 h-5 ${
+                  layoutMode === "separate" ? "text-terracotta" : "text-charcoal-light"
+                }`} />
+              </div>
+              <div>
+                <span className="text-sm font-semibold text-charcoal block" style={{ fontFamily: "var(--font-body)" }}>
+                  Separate Sections
+                </span>
+                <span className="text-xs text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
+                  Default layout
+                </span>
+              </div>
+            </div>
+            <p className="text-xs text-charcoal-light leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+              Skills, Experience, and Education are shown as individual full-width sections with their own headers.
+            </p>
+            {/* Mini preview */}
+            <div className="mt-4 space-y-1.5">
+              <div className="h-2 rounded-full bg-warm-200 w-full" />
+              <div className="h-2 rounded-full bg-warm-200 w-full" />
+              <div className="h-2 rounded-full bg-warm-200 w-full" />
+            </div>
+          </button>
+
+          {/* Combined option */}
+          <button
+            onClick={() => setLayoutMode("combined")}
+            className={`p-5 rounded-2xl border-2 transition-all text-left ${
+              layoutMode === "combined"
+                ? "border-terracotta bg-terracotta/5 shadow-[0_2px_12px_var(--accent-hex,#B85C38)20]"
+                : "border-warm-200/60 hover:border-warm-300 bg-white"
+            }`}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                layoutMode === "combined" ? "bg-terracotta/15" : "bg-warm-100"
+              }`}>
+                <Wrench className={`w-5 h-5 ${
+                  layoutMode === "combined" ? "text-terracotta" : "text-charcoal-light"
+                }`} />
+              </div>
+              <div>
+                <span className="text-sm font-semibold text-charcoal block" style={{ fontFamily: "var(--font-body)" }}>
+                  Combined Pill Tabs
+                </span>
+                <span className="text-xs text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
+                  Compact layout
+                </span>
+              </div>
+            </div>
+            <p className="text-xs text-charcoal-light leading-relaxed" style={{ fontFamily: "var(--font-body)" }}>
+              Skills, Experience, and Education are merged into one section with pill-tab navigation to switch between them.
+            </p>
+            {/* Mini preview */}
+            <div className="mt-4">
+              <div className="flex gap-1.5 mb-2">
+                <div className="h-2 rounded-full bg-terracotta w-12" />
+                <div className="h-2 rounded-full bg-warm-200 w-16" />
+                <div className="h-2 rounded-full bg-warm-200 w-14" />
+              </div>
+              <div className="h-2 rounded-full bg-warm-200 w-full" />
+            </div>
+          </button>
+        </div>
+      </div>
+
+      {/* Section Arrangement */}
+      <div className="warm-card p-6 md:p-8">
+        <h3 className="text-xl text-charcoal mb-2" style={{ fontFamily: "var(--font-display)" }}>
+          Section Arrangement
+        </h3>
+        <p className="text-sm text-charcoal-light mb-6" style={{ fontFamily: "var(--font-body)" }}>
+          Drag and drop or use arrows to reorder sections on your portfolio page.
+        </p>
+
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={sectionOrder} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
+              {sectionOrder.map((sectionId, index) => (
+                <SortableSectionItem
+                  key={sectionId}
+                  id={sectionId}
+                  index={index}
+                  total={sectionOrder.length}
+                  onMoveUp={() => moveSection(index, "up")}
+                  onMoveDown={() => moveSection(index, "down")}
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+
+        {layoutMode === "combined" && (
+          <div className="mt-4 p-3 rounded-xl bg-terracotta/5 border border-terracotta/20">
+            <p className="text-xs text-terracotta" style={{ fontFamily: "var(--font-body)" }}>
+              In combined mode, Skills, Experience, and Education will appear as one section with pill tabs.
+              The position of the combined section is determined by whichever of the three appears first in the order above.
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* Save / Reset */}
+      <div className="flex items-center gap-3">
+        <button
+          onClick={handleSave}
+          disabled={updateMutation.isPending}
+          className="pill-primary gap-2"
+        >
+          {updateMutation.isPending ? (
+            <Loader2 className="w-4 h-4 animate-spin" />
+          ) : (
+            <Save className="w-4 h-4" />
+          )}
+          Save Layout
+        </button>
+        <button
+          onClick={handleReset}
+          disabled={isDefault}
+          className="pill-outline gap-2"
+          style={{ opacity: isDefault ? 0.5 : 1 }}
+        >
+          <RotateCcw className="w-4 h-4" />
+          Reset to Default
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================
 // MAIN ADMIN PAGE
 // ============================================================
 // ============================================================
@@ -1690,6 +2019,7 @@ const tabs = [
   { id: "experience", label: "Experience", icon: Briefcase },
   { id: "skills", label: "Skills", icon: Wrench },
   { id: "education", label: "Education", icon: GraduationCap },
+  { id: "layout", label: "Layout", icon: LayoutGrid },
   { id: "analytics", label: "Analytics", icon: BarChart3 },
   { id: "theme", label: "Theme", icon: Palette },
 ];
@@ -1826,6 +2156,7 @@ export default function Admin() {
         {activeTab === "experience" && <ExperienceTab />}
         {activeTab === "skills" && <SkillsTab />}
         {activeTab === "education" && <EducationTab />}
+        {activeTab === "layout" && <LayoutTab />}
         {activeTab === "analytics" && <AnalyticsTab />}
         {activeTab === "theme" && <ThemeTab />}
       </div>

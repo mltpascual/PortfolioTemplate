@@ -645,6 +645,8 @@ export interface ThemeSettings {
   heading_font: string;
   body_font: string;
   dark_mode: boolean;
+  layout_mode: string;
+  section_order: string;
   created_at: string;
   updated_at: string;
 }
@@ -655,6 +657,8 @@ export const DEFAULT_THEME: Omit<ThemeSettings, 'id' | 'created_at' | 'updated_a
   heading_font: 'DM Serif Display',
   body_font: 'DM Sans',
   dark_mode: false,
+  layout_mode: 'separate',
+  section_order: 'hero,about,projects,skills,experience,education,contact',
 };
 
 function themeSettingsToCamel(row: ThemeSettings) {
@@ -665,6 +669,8 @@ function themeSettingsToCamel(row: ThemeSettings) {
     headingFont: row.heading_font,
     bodyFont: row.body_font,
     darkMode: row.dark_mode ?? false,
+    layoutMode: row.layout_mode || 'separate',
+    sectionOrder: row.section_order || 'hero,about,projects,skills,experience,education,contact',
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -687,6 +693,8 @@ export async function getThemeSettings() {
       headingFont: DEFAULT_THEME.heading_font,
       bodyFont: DEFAULT_THEME.body_font,
       darkMode: DEFAULT_THEME.dark_mode,
+      layoutMode: DEFAULT_THEME.layout_mode,
+      sectionOrder: DEFAULT_THEME.section_order,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -700,6 +708,8 @@ export async function updateThemeSettings(input: {
   headingFont?: string;
   bodyFont?: string;
   darkMode?: boolean;
+  layoutMode?: string;
+  sectionOrder?: string;
 }) {
   const sb = getSupabaseAdmin();
   const snakeData: Record<string, any> = {};
@@ -708,6 +718,8 @@ export async function updateThemeSettings(input: {
   if (input.headingFont !== undefined) snakeData.heading_font = input.headingFont;
   if (input.bodyFont !== undefined) snakeData.body_font = input.bodyFont;
   if (input.darkMode !== undefined) snakeData.dark_mode = input.darkMode;
+  if (input.layoutMode !== undefined) snakeData.layout_mode = input.layoutMode;
+  if (input.sectionOrder !== undefined) snakeData.section_order = input.sectionOrder;
   snakeData.updated_at = new Date().toISOString();
 
   // Get existing row
@@ -722,6 +734,8 @@ export async function updateThemeSettings(input: {
         heading_font: input.headingFont || DEFAULT_THEME.heading_font,
         body_font: input.bodyFont || DEFAULT_THEME.body_font,
         dark_mode: input.darkMode ?? DEFAULT_THEME.dark_mode,
+        layout_mode: input.layoutMode || DEFAULT_THEME.layout_mode,
+        section_order: input.sectionOrder || DEFAULT_THEME.section_order,
       })
       .select()
       .single();
@@ -746,6 +760,8 @@ export async function resetThemeSettings() {
     headingFont: DEFAULT_THEME.heading_font,
     bodyFont: DEFAULT_THEME.body_font,
     darkMode: DEFAULT_THEME.dark_mode,
+    layoutMode: DEFAULT_THEME.layout_mode,
+    sectionOrder: DEFAULT_THEME.section_order,
   });
 }
 

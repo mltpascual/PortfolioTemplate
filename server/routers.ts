@@ -91,6 +91,8 @@ export const appRouter = router({
           headingFont: z.enum(ALLOWED_HEADING_FONTS).optional(),
           bodyFont: z.enum(ALLOWED_BODY_FONTS).optional(),
           darkMode: z.boolean().optional(),
+          layoutMode: z.enum(["separate", "combined"]).optional(),
+          sectionOrder: z.string().max(500).optional(),
         })
       )
       .mutation(async ({ input }) => {

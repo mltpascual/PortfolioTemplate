@@ -8,6 +8,8 @@ export type ThemeSettingsData = {
   headingFont: string;
   bodyFont: string;
   darkMode: boolean;
+  layoutMode: string;
+  sectionOrder: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -19,6 +21,8 @@ export const DEFAULT_THEME = {
   headingFont: "DM Serif Display",
   bodyFont: "DM Sans",
   darkMode: false,
+  layoutMode: "separate",
+  sectionOrder: "hero,about,projects,skills,experience,education,contact",
 };
 
 // Curated font list for the selector
