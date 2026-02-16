@@ -149,6 +149,7 @@ async function startServer() {
     createExpressMiddleware({
       router: appRouter,
       createContext,
+      maxBodySize: 50 * 1024 * 1024, // 50MB to support base64 image uploads
     })
   );
 

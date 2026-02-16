@@ -250,3 +250,9 @@
 - [x] When clicked, scroll to combined pill-tab section and auto-select the correct tab
 - [x] Test upload with Supabase Storage (verified via tRPC mutation test script)
 - [x] Push to GitHub
+
+## Bug Fix: "Unexpected token R, Request En..." JSON Error
+- [x] Diagnose and fix JSON parsing error ("Request Entity Too Large" — tRPC maxBodySize was default ~1MB)
+  - Fix: Added maxBodySize: 50MB to createExpressMiddleware options
+  - Verified: 2.67MB base64 payload now passes through tRPC middleware
+- [ ] Push to GitHub
