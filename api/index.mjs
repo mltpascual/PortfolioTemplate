@@ -258,6 +258,7 @@ function projectToCamel(row) {
     githubUrl: row.github_url,
     tags: row.tags,
     featured: row.featured ? 1 : 0,
+    displayMode: row.display_mode || "live",
     sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at
@@ -330,6 +331,7 @@ function projectToSnake(data) {
     githubUrl: "github_url",
     tags: "tags",
     featured: "featured",
+    displayMode: "display_mode",
     sortOrder: "sort_order"
   };
   const result = {};
