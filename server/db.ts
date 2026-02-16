@@ -70,6 +70,7 @@ export interface Project {
   github_url: string;
   tags: string | null;
   featured: boolean;
+  display_mode: string;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -137,6 +138,7 @@ function projectToCamel(row: Project) {
     githubUrl: row.github_url,
     tags: row.tags,
     featured: row.featured ? 1 : 0,
+    displayMode: row.display_mode || 'live',
     sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -217,6 +219,7 @@ function projectToSnake(data: Record<string, any>) {
     githubUrl: "github_url",
     tags: "tags",
     featured: "featured",
+    displayMode: "display_mode",
     sortOrder: "sort_order",
   };
   const result: Record<string, any> = {};

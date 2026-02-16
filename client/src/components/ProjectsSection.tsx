@@ -5,7 +5,7 @@
  */
 
 import { useEffect, useRef, useState, useCallback } from "react";
-import { ArrowUpRight, Github, FolderOpen, Globe, Image, Loader2 } from "lucide-react";
+import { ArrowUpRight, Github, FolderOpen, Globe, Loader2 } from "lucide-react";
 import type { PortfolioData } from "@/hooks/usePortfolio";
 import { parseTags } from "@/hooks/usePortfolio";
 
@@ -39,16 +39,18 @@ function useInView(options?: IntersectionObserverInit) {
   return { ref, visible };
 }
 
-/* ── Project Preview (iframe + image toggle) ───────────────────── */
+/* ── Project Preview (uses admin-set displayMode) ────────────── */
 interface ProjectPreviewProps {
   liveUrl: string | null;
   imageUrl: string | null;
   title: string;
   fallbackIndex: number;
+  displayMode: string;
 }
 
-function ProjectPreview({ liveUrl, imageUrl, title, fallbackIndex }: ProjectPreviewProps) {
-  const [mode, setMode] = useState<"live" | "image">(liveUrl ? "live" : "image");
+function ProjectPreview({ liveUrl, imageUrl, title, fallbackIndex, displayMode }: ProjectPreviewProps) {
+  // Use admin-set display mode; fallback to image if no live URL
+  const mode = (displayMode === "live" && liveUrl) ? "live" : "image";
   const [iframeLoaded, setIframeLoaded] = useState(false);
   const [iframeFailed, setIframeFailed] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -56,9 +58,9 @@ function ProjectPreview({ liveUrl, imageUrl, title, fallbackIndex }: ProjectPrev
 
   const fallbackImage = imageUrl || FALLBACK_IMAGES[fallbackIndex % FALLBACK_IMAGES.length];
 
-  // Reset state when mode changes
+  // Start timeout for iframe loading
   useEffect(() => {
-    if (mode === "live") {
+    if (mode === "live" && liveUrl) {
       setIframeLoaded(false);
       setIframeFailed(false);
       timeoutRef.current = setTimeout(() => setIframeFailed(true), 10000);
@@ -66,7 +68,7 @@ function ProjectPreview({ liveUrl, imageUrl, title, fallbackIndex }: ProjectPrev
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };
-  }, [mode]);
+  }, [mode, liveUrl]);
 
   const handleIframeLoad = useCallback(() => {
     setIframeLoaded(true);
@@ -79,39 +81,9 @@ function ProjectPreview({ liveUrl, imageUrl, title, fallbackIndex }: ProjectPrev
   }, []);
 
   const showLivePreview = mode === "live" && liveUrl && !iframeFailed;
-  const hasToggle = liveUrl && (imageUrl || fallbackImage);
 
   return (
     <div className="relative w-full aspect-video lg:aspect-auto lg:h-full min-h-[220px] sm:min-h-[280px] overflow-hidden group">
-      {/* Toggle Button */}
-      {hasToggle && (
-        <div className="absolute top-3 right-3 z-20 flex items-center gap-1 bg-charcoal/70 backdrop-blur-sm rounded-full p-1 shadow-lg">
-          <button
-            onClick={() => setMode("live")}
-            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
-              mode === "live"
-                ? "bg-terracotta text-white shadow-sm"
-                : "text-white/70 hover:text-white"
-            }`}
-            title="Live Preview"
-          >
-            <Globe className="w-3.5 h-3.5" />
-            <span>Live</span>
-          </button>
-          <button
-            onClick={() => setMode("image")}
-            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 ${
-              mode === "image"
-                ? "bg-terracotta text-white shadow-sm"
-                : "text-white/70 hover:text-white"
-            }`}
-            title="Static Image"
-          >
-            <Image className="w-3.5 h-3.5" />
-            <span>Image</span>
-          </button>
-        </div>
-      )}
 
       {/* Live Preview (iframe) */}
       {showLivePreview && (
@@ -210,6 +182,7 @@ function ProjectCard({ project, index }: ProjectCardProps) {
             imageUrl={project.imageUrl}
             title={project.title}
             fallbackIndex={index}
+            displayMode={(project as any).displayMode || "live"}
           />
         </div>
 

@@ -203,6 +203,7 @@ function ProjectsTab() {
     githubUrl: "",
     tags: "",
     featured: 0,
+    displayMode: "live" as string,
     sortOrder: 0,
   });
 
@@ -216,13 +217,14 @@ function ProjectsTab() {
       githubUrl: project.githubUrl || "",
       tags: project.tags || "",
       featured: project.featured || 0,
+      displayMode: project.displayMode || "live",
       sortOrder: project.sortOrder || 0,
     });
   };
 
   const startNew = () => {
     setEditing("new");
-    setForm({ title: "", description: "", imageUrl: "", liveUrl: "", githubUrl: "", tags: "", featured: 0, sortOrder: (projects?.length || 0) + 1 });
+    setForm({ title: "", description: "", imageUrl: "", liveUrl: "", githubUrl: "", tags: "", featured: 0, displayMode: "live", sortOrder: (projects?.length || 0) + 1 });
   };
 
   const handleSave = () => {
@@ -265,7 +267,7 @@ function ProjectsTab() {
             <InputField label="GitHub URL" value={form.githubUrl} onChange={(v) => setForm({ ...form, githubUrl: v })} placeholder="https://..." />
           </div>
           <InputField label="Tags (comma-separated)" value={form.tags} onChange={(v) => setForm({ ...form, tags: v })} placeholder="React, TypeScript, Node.js" />
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <InputField label="Sort Order" value={String(form.sortOrder)} onChange={(v) => setForm({ ...form, sortOrder: parseInt(v) || 0 })} placeholder="1" />
             <div className="flex items-center gap-3 pt-6">
               <label className="text-sm font-medium text-charcoal" style={{ fontFamily: "var(--font-body)" }}>Featured</label>
@@ -276,6 +278,25 @@ function ProjectsTab() {
               >
                 <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full transition-transform duration-200 ${form.featured === 1 ? "translate-x-6" : "translate-x-0"}`} />
               </button>
+            </div>
+            <div className="flex items-center gap-3 pt-6">
+              <label className="text-sm font-medium text-charcoal" style={{ fontFamily: "var(--font-body)" }}>Display</label>
+              <div className="flex rounded-full overflow-hidden border border-warm-200">
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, displayMode: "live" })}
+                  className={`px-3 py-1 text-xs font-medium transition-colors ${form.displayMode === "live" ? "bg-terracotta text-white" : "bg-warm-50 text-charcoal-light hover:bg-warm-100"}`}
+                >
+                  Live
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, displayMode: "image" })}
+                  className={`px-3 py-1 text-xs font-medium transition-colors ${form.displayMode === "image" ? "bg-terracotta text-white" : "bg-warm-50 text-charcoal-light hover:bg-warm-100"}`}
+                >
+                  Image
+                </button>
+              </div>
             </div>
           </div>
           <button onClick={handleSave} disabled={createProject.isPending || updateProject.isPending} className="pill-primary gap-2">
@@ -298,6 +319,11 @@ function ProjectsTab() {
                 {project.featured === 1 && (
                   <span className="text-xs px-2 py-0.5 rounded-full bg-terracotta/10 text-terracotta font-medium">Featured</span>
                 )}
+                <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                  project.displayMode === "image" ? "bg-warm-200/60 text-charcoal-light" : "bg-green-100 text-green-700"
+                }`}>
+                  {project.displayMode === "image" ? "Image" : "Live"}
+                </span>
               </div>
               <p className="text-sm text-charcoal-light truncate" style={{ fontFamily: "var(--font-body)" }}>
                 {project.description || "No description"}

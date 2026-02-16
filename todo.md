@@ -128,3 +128,10 @@
 ## Bug Fix: Mobile Projects Section + CAD URL
 - [x] Fix blank Projects section on mobile/phone view
 - [x] Update CAD Studio live URL to https://cadclone.vercel.app/
+
+## Phase 17: Move Live/Image toggle to Admin Dashboard
+- [x] Add display_mode column to projects table in Supabase (live | image)
+- [x] Update backend API to support display_mode per project
+- [x] Add display mode toggle to admin project management UI
+- [x] Remove toggle from public ProjectsSection — use admin-set display_mode
+- [x] Push to GitHub and verify on Vercel
