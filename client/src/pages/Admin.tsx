@@ -806,11 +806,25 @@ function ImageUploadField({ label, value, onChange }: { label: string; value: st
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || "Upload failed");
+        let errorMsg = "Upload failed";
+        try {
+          const text = await response.text();
+          const err = JSON.parse(text);
+          errorMsg = err.error || errorMsg;
+        } catch {
+          errorMsg = `Upload failed (${response.status} ${response.statusText})`;
+        }
+        throw new Error(errorMsg);
       }
 
-      const { url } = await response.json();
+      let url: string;
+      try {
+        const text = await response.text();
+        const data = JSON.parse(text);
+        url = data.url;
+      } catch {
+        throw new Error("Invalid response from server");
+      }
       onChange(url);
       toast.success("Image uploaded successfully!");
     } catch (error: any) {

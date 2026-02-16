@@ -224,3 +224,8 @@
 ## Bug Fix: Project Card Image Cropping + Tech Tags
 - [x] Fix project card image object-position to show top of screenshot (object-top instead of center)
 - [x] Fix tech tags showing brackets — parseTags now handles both JSON array and comma-separated formats
+
+## Bug Fix: Image Upload Returns HTML Instead of JSON
+- [x] Diagnose and fix image upload error ("Unexpected token '<' is not valid JSON")
+  - Fixed: Auth check used ownerOpenId (Manus OAuth) instead of user.role (GitHub OAuth)
+  - Fixed: Client-side error handling now safely parses non-JSON responses

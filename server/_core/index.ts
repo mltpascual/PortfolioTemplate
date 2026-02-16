@@ -96,7 +96,7 @@ async function startServer() {
         res.status(401).json({ error: "Unauthorized" });
         return;
       }
-      if (!user || user.openId !== ENV.ownerOpenId) {
+      if (!user || user.role !== "admin") {
         res.status(403).json({ error: "Forbidden" });
         return;
       }
