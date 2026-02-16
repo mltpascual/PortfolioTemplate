@@ -200,6 +200,16 @@ export const appRouter = router({
         await db.reorderProjects(input.items);
         return { success: true };
       }),
+    bulkTileSize: adminProcedure
+      .input(
+        z.object({
+          tileSize: z.enum(["small", "medium", "large", "wide"]),
+        })
+      )
+      .mutation(async ({ input }) => {
+        await db.bulkUpdateTileSize(input.tileSize);
+        return { success: true };
+      }),
   }),
 
   // ==========================================

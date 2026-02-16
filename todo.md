@@ -162,3 +162,8 @@
 - [x] Add lightweight analytics tracking for project clicks and page engagement
 - [x] Write tests for new features
 - [x] Push to GitHub and verify
+
+## Phase 21: Bulk Tile Size Control
+- [x] Add bulk tile size buttons in admin Projects tab (All Small, All Medium, All Large, All Wide)
+- [x] Add backend endpoint for bulk tile size update
+- [x] Test and verify

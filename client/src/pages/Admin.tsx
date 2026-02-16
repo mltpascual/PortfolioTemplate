@@ -225,6 +225,15 @@ function ProjectsTab() {
     onError: (err) => toast.error(err.message),
   });
 
+  const bulkTileSize = trpc.adminProjects.bulkTileSize.useMutation({
+    onSuccess: (_, vars) => {
+      toast.success(`All projects set to ${vars.tileSize}!`);
+      utils.adminProjects.list.invalidate();
+      utils.portfolio.getAll.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
   const [editing, setEditing] = useState<number | "new" | null>(null);
   const [form, setForm] = useState({
     title: "",
@@ -365,6 +374,35 @@ function ProjectsTab() {
             {(createProject.isPending || updateProject.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             {editing === "new" ? "Create Project" : "Update Project"}
           </button>
+        </div>
+      )}
+
+      {/* Bulk Tile Size Controls */}
+      {projects && projects.length > 0 && (
+        <div className="warm-card p-4">
+          <p className="text-xs font-medium text-charcoal-light mb-2" style={{ fontFamily: "var(--font-body)" }}>
+            Set All Tile Sizes
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {(["small", "medium", "large", "wide"] as const).map((size) => (
+              <button
+                key={size}
+                onClick={() => bulkTileSize.mutate({ tileSize: size })}
+                disabled={bulkTileSize.isPending}
+                className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                  bulkTileSize.isPending
+                    ? "opacity-50 cursor-not-allowed"
+                    : "hover:bg-terracotta hover:text-white hover:border-terracotta"
+                } border-warm-300 text-charcoal`}
+                style={{ fontFamily: "var(--font-body)" }}
+              >
+                {bulkTileSize.isPending ? (
+                  <Loader2 className="w-3 h-3 animate-spin inline mr-1" />
+                ) : null}
+                All {size.charAt(0).toUpperCase() + size.slice(1)}
+              </button>
+            ))}
+          </div>
         </div>
       )}
 

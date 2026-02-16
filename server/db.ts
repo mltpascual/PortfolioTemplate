@@ -385,6 +385,18 @@ export async function reorderProjects(items: Array<{ id: number; sortOrder: numb
   }
 }
 
+export async function bulkUpdateTileSize(tileSize: string) {
+  const sb = getSupabaseAdmin();
+  const { error } = await sb
+    .from("projects")
+    .update({ tile_size: tileSize, updated_at: new Date().toISOString() })
+    .neq("id", 0); // Update all rows
+  if (error) {
+    console.error('[DB] Failed to bulk update tile size:', error.message);
+    throw new Error('Failed to bulk update tile size');
+  }
+}
+
 // ==========================================
 // EXPERIENCES (Supabase)
 // ==========================================
