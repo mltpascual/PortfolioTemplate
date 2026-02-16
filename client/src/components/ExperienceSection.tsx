@@ -82,19 +82,28 @@ export default function ExperienceSection({ experiences }: ExperienceSectionProp
                   {/* Card */}
                   <div className="warm-card p-6 md:p-8">
                     <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-2 mb-3">
-                      <div>
-                        <h3
-                          className="text-xl md:text-2xl text-charcoal"
-                          style={{ fontFamily: "var(--font-display)" }}
-                        >
-                          {exp.role}
-                        </h3>
-                        <p
-                          className="text-terracotta font-medium text-sm mt-0.5"
-                          style={{ fontFamily: "var(--font-body)" }}
-                        >
-                          {exp.company}
-                        </p>
+                      <div className="flex items-start gap-3">
+                        {exp.logoUrl && (
+                          <img
+                            src={exp.logoUrl}
+                            alt={`${exp.company} logo`}
+                            className="w-10 h-10 md:w-12 md:h-12 rounded-lg object-contain bg-white border border-warm-200/60 p-1 flex-shrink-0 mt-1"
+                          />
+                        )}
+                        <div>
+                          <h3
+                            className="text-xl md:text-2xl text-charcoal"
+                            style={{ fontFamily: "var(--font-display)" }}
+                          >
+                            {exp.role}
+                          </h3>
+                          <p
+                            className="text-terracotta font-medium text-sm mt-0.5"
+                            style={{ fontFamily: "var(--font-body)" }}
+                          >
+                            {exp.company}
+                          </p>
+                        </div>
                       </div>
                       <span
                         className="text-sm text-charcoal-light whitespace-nowrap px-3 py-1 rounded-full bg-warm-100 border border-warm-200/60 self-start"

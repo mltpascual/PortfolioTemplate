@@ -479,16 +479,16 @@ function ExperienceTab() {
   });
 
   const [editing, setEditing] = useState<number | "new" | null>(null);
-  const [form, setForm] = useState({ role: "", company: "", period: "", description: "", tags: "", sortOrder: 0 });
+  const [form, setForm] = useState({ role: "", company: "", period: "", description: "", tags: "", logoUrl: "", sortOrder: 0 });
 
   const startEdit = (exp: any) => {
     setEditing(exp.id);
-    setForm({ role: exp.role || "", company: exp.company || "", period: exp.period || "", description: exp.description || "", tags: exp.tags || "", sortOrder: exp.sortOrder || 0 });
+    setForm({ role: exp.role || "", company: exp.company || "", period: exp.period || "", description: exp.description || "", tags: exp.tags || "", logoUrl: exp.logoUrl || "", sortOrder: exp.sortOrder || 0 });
   };
 
   const startNew = () => {
     setEditing("new");
-    setForm({ role: "", company: "", period: "", description: "", tags: "", sortOrder: (experiences?.length || 0) + 1 });
+    setForm({ role: "", company: "", period: "", description: "", tags: "", logoUrl: "", sortOrder: (experiences?.length || 0) + 1 });
   };
 
   const handleSave = () => {
@@ -532,6 +532,7 @@ function ExperienceTab() {
             </div>
             <TextareaField label="Description" value={form.description} onChange={(v) => setForm({ ...form, description: v })} placeholder="What did you accomplish?" rows={3} />
             <InputField label="Tags (comma-separated)" value={form.tags} onChange={(v) => setForm({ ...form, tags: v })} placeholder="React, TypeScript, Leadership" />
+            <ImageUploadField label="Company Logo" value={form.logoUrl} onChange={(v) => setForm({ ...form, logoUrl: v })} />
             <div className="flex justify-end gap-3 pt-2">
               <button onClick={() => setEditing(null)} className="px-5 py-2.5 rounded-full text-sm font-medium text-charcoal-light hover:bg-warm-100 transition-colors" style={{ fontFamily: "var(--font-body)" }}>
                 Cancel
@@ -921,6 +922,7 @@ function EducationTab() {
   const [endYear, setEndYear] = useState<number | null>(null);
   const [description, setDescription] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
+  const [logoUrl, setLogoUrl] = useState("");
 
   const createMutation = trpc.adminEducation.create.useMutation({
     onSuccess: () => { utils.adminEducation.list.invalidate(); toast.success("Education added!"); resetForm(); },
@@ -945,6 +947,7 @@ function EducationTab() {
     setEndYear(null);
     setDescription("");
     setSortOrder(0);
+    setLogoUrl("");
   }
 
   function openCreate() {
@@ -961,14 +964,15 @@ function EducationTab() {
     setEndYear(edu.endYear || null);
     setDescription(edu.description || "");
     setSortOrder(edu.sortOrder || 0);
+    setLogoUrl(edu.logoUrl || "");
     setShowModal(true);
   }
 
   function handleSave() {
     if (editingId) {
-      updateMutation.mutate({ id: editingId, institution, degree, fieldOfStudy: fieldOfStudy || undefined, startYear, endYear, description: description || undefined, sortOrder });
+      updateMutation.mutate({ id: editingId, institution, degree, fieldOfStudy: fieldOfStudy || undefined, startYear, endYear, description: description || undefined, logoUrl: logoUrl || undefined, sortOrder });
     } else {
-      createMutation.mutate({ institution, degree, fieldOfStudy: fieldOfStudy || undefined, startYear, endYear, description: description || undefined, sortOrder });
+      createMutation.mutate({ institution, degree, fieldOfStudy: fieldOfStudy || undefined, startYear, endYear, description: description || undefined, logoUrl: logoUrl || undefined, sortOrder });
     }
   }
 
@@ -1042,6 +1046,7 @@ function EducationTab() {
               </div>
               <TextareaField label="Description" value={description} onChange={setDescription} placeholder="Describe your studies, achievements, activities..." />
               <InputField label="Sort Order" value={String(sortOrder)} onChange={(v) => setSortOrder(parseInt(v) || 0)} placeholder="0" />
+              <ImageUploadField label="Institution Logo" value={logoUrl} onChange={setLogoUrl} />
               <div className="flex gap-3 pt-2">
                 <button onClick={handleSave} disabled={isSaving || !institution || !degree} className="pill-primary-sm flex items-center gap-2 disabled:opacity-50">
                   {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}

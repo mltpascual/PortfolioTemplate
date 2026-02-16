@@ -227,6 +227,7 @@ export const appRouter = router({
           period: requiredText(100),
           description: safeText(5000),
           tags: safeText(1000),
+          logoUrl: safeUrl,
           sortOrder: z.number().min(0).max(9999).optional(),
         })
       )
@@ -242,6 +243,7 @@ export const appRouter = router({
           period: safeText(100),
           description: safeText(5000),
           tags: safeText(1000),
+          logoUrl: safeUrl,
           sortOrder: z.number().min(0).max(9999).optional(),
         })
       )
@@ -309,6 +311,7 @@ export const appRouter = router({
           startYear: z.number().int().min(1950).max(2100),
           endYear: z.number().int().min(1950).max(2100).optional().nullable(),
           description: safeText(5000),
+          logoUrl: safeUrl,
           sortOrder: z.number().min(0).max(9999).optional(),
         })
       )
@@ -325,6 +328,7 @@ export const appRouter = router({
           startYear: z.number().int().min(1950).max(2100).optional(),
           endYear: z.number().int().min(1950).max(2100).optional().nullable(),
           description: safeText(5000),
+          logoUrl: safeUrl,
           sortOrder: z.number().min(0).max(9999).optional(),
         })
       )

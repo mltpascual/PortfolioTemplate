@@ -83,6 +83,7 @@ export interface Experience {
   period: string;
   description: string | null;
   tags: string | null;
+  logo_url: string | null;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -153,6 +154,7 @@ function experienceToCamel(row: Experience) {
     period: row.period,
     description: row.description,
     tags: row.tags,
+    logoUrl: row.logo_url,
     sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -243,6 +245,7 @@ function experienceToSnake(data: Record<string, any>) {
     period: "period",
     description: "description",
     tags: "tags",
+    logoUrl: "logo_url",
     sortOrder: "sort_order",
   };
   const result: Record<string, any> = {};
@@ -532,6 +535,7 @@ export interface Education {
   start_year: number;
   end_year: number | null;
   description: string | null;
+  logo_url: string | null;
   sort_order: number;
   created_at: string;
   updated_at: string;
@@ -547,6 +551,7 @@ function educationToCamel(row: Education) {
     startYear: row.start_year,
     endYear: row.end_year,
     description: row.description,
+    logoUrl: row.logo_url,
     sortOrder: row.sort_order,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -561,6 +566,7 @@ function educationToSnake(data: Record<string, any>) {
     startYear: "start_year",
     endYear: "end_year",
     description: "description",
+    logoUrl: "logo_url",
     sortOrder: "sort_order",
   };
   const result: Record<string, any> = {};

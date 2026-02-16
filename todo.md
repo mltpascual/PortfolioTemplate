@@ -193,3 +193,13 @@
 - [x] Add Education section to main portfolio page
 - [x] Create education table in Supabase database
 - [x] Add education backend routes and db functions
+
+## Phase 28: Education Entries + Logo Upload for Work & Education
+- [x] Add Red River College Polytechnic education entry to database
+- [x] Add Adamson University education entry to database
+- [x] Add logo_url column to education table in Supabase
+- [x] Add logo_url column to experiences table in Supabase
+- [x] Update backend db.ts and routers.ts to support logo_url for both
+- [x] Add logo upload UI to Education tab in admin (modal form)
+- [x] Add logo upload UI to Experience tab in admin (modal form)
+- [x] Display logos in public Education and Experience sections

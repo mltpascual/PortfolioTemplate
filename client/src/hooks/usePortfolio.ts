@@ -40,6 +40,7 @@ export type PortfolioData = {
     period: string;
     description: string | null;
     tags: string | null;
+    logoUrl: string | null;
     sortOrder: number;
   }>;
   skills: Array<{
@@ -57,6 +58,7 @@ export type PortfolioData = {
     startYear: number;
     endYear: number | null;
     description: string | null;
+    logoUrl: string | null;
     sortOrder: number;
   }>;
 };
@@ -106,6 +108,7 @@ const defaultExperiences = [
     period: "20XX — Present",
     description: "Add your work experience through the admin dashboard.",
     tags: "Add, Your, Skills",
+    logoUrl: null,
     sortOrder: 1,
   },
 ];
@@ -123,6 +126,7 @@ const defaultEducation = [
     startYear: 2018,
     endYear: 2022,
     description: "Add your education through the admin dashboard.",
+    logoUrl: null,
     sortOrder: 1,
   },
 ];
