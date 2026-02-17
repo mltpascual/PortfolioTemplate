@@ -285,3 +285,7 @@
 ## Phase 34: Add Home link to navbar
 - [x] Add Home nav link pointing to hero section
 - [x] Push to GitHub
+
+## Phase 35: Bulk update all project tags
+- [x] Update all project tags to React, TypeScript, JavaScript, CSS, HTML, SEO
+- [ ] Push to GitHub

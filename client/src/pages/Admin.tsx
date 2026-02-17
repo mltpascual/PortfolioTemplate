@@ -252,6 +252,16 @@ function ProjectsTab() {
     onError: (err) => toast.error(err.message),
   });
 
+  const bulkTags = trpc.adminProjects.bulkTags.useMutation({
+    onSuccess: () => {
+      toast.success("All project tags updated!");
+      utils.adminProjects.list.invalidate();
+      utils.portfolio.getAll.invalidate();
+    },
+    onError: (err) => toast.error(err.message),
+  });
+  const [bulkTagsInput, setBulkTagsInput] = useState("");
+
   const [editing, setEditing] = useState<number | "new" | null>(null);
   const [form, setForm] = useState({
     title: "",
@@ -399,31 +409,70 @@ function ProjectsTab() {
         </DialogContent>
       </Dialog>
 
-      {/* Bulk Tile Size Controls */}
+      {/* Bulk Controls */}
       {projects && projects.length > 0 && (
-        <div className="warm-card p-4">
-          <p className="text-xs font-medium text-charcoal-light mb-2" style={{ fontFamily: "var(--font-body)" }}>
-            Set All Tile Sizes
-          </p>
-          <div className="flex flex-wrap gap-2">
-            {(["small", "medium", "large", "wide"] as const).map((size) => (
+        <div className="space-y-3">
+          {/* Bulk Tile Size */}
+          <div className="warm-card p-4">
+            <p className="text-xs font-medium text-charcoal-light mb-2" style={{ fontFamily: "var(--font-body)" }}>
+              Set All Tile Sizes
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {(["small", "medium", "large", "wide"] as const).map((size) => (
+                <button
+                  key={size}
+                  onClick={() => bulkTileSize.mutate({ tileSize: size })}
+                  disabled={bulkTileSize.isPending}
+                  className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                    bulkTileSize.isPending
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-terracotta hover:text-white hover:border-terracotta"
+                  } border-warm-300 text-charcoal`}
+                  style={{ fontFamily: "var(--font-body)" }}
+                >
+                  {bulkTileSize.isPending ? (
+                    <Loader2 className="w-3 h-3 animate-spin inline mr-1" />
+                  ) : null}
+                  All {size.charAt(0).toUpperCase() + size.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Bulk Tags */}
+          <div className="warm-card p-4">
+            <p className="text-xs font-medium text-charcoal-light mb-2" style={{ fontFamily: "var(--font-body)" }}>
+              Set All Project Tags
+            </p>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={bulkTagsInput}
+                onChange={(e) => setBulkTagsInput(e.target.value)}
+                placeholder="e.g. React, TypeScript, CSS"
+                className="flex-1 px-3 py-1.5 text-xs rounded-full border border-warm-300 bg-transparent text-charcoal focus:outline-none focus:border-terracotta"
+                style={{ fontFamily: "var(--font-body)" }}
+              />
               <button
-                key={size}
-                onClick={() => bulkTileSize.mutate({ tileSize: size })}
-                disabled={bulkTileSize.isPending}
-                className={`px-3 py-1.5 text-xs font-medium rounded-full border transition-colors ${
-                  bulkTileSize.isPending
-                    ? "opacity-50 cursor-not-allowed"
-                    : "hover:bg-terracotta hover:text-white hover:border-terracotta"
-                } border-warm-300 text-charcoal`}
+                onClick={() => {
+                  if (bulkTagsInput.trim()) {
+                    bulkTags.mutate({ tags: bulkTagsInput.trim() });
+                  }
+                }}
+                disabled={bulkTags.isPending || !bulkTagsInput.trim()}
+                className={`px-4 py-1.5 text-xs font-medium rounded-full border transition-colors ${
+                  bulkTags.isPending || !bulkTagsInput.trim()
+                    ? "opacity-50 cursor-not-allowed border-warm-300 text-charcoal"
+                    : "hover:bg-terracotta hover:text-white hover:border-terracotta border-warm-300 text-charcoal"
+                }`}
                 style={{ fontFamily: "var(--font-body)" }}
               >
-                {bulkTileSize.isPending ? (
+                {bulkTags.isPending ? (
                   <Loader2 className="w-3 h-3 animate-spin inline mr-1" />
                 ) : null}
-                All {size.charAt(0).toUpperCase() + size.slice(1)}
+                Apply to All
               </button>
-            ))}
+            </div>
           </div>
         </div>
       )}

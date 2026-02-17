@@ -215,6 +215,16 @@ export const appRouter = router({
         await db.bulkUpdateTileSize(input.tileSize);
         return { success: true };
       }),
+    bulkTags: adminProcedure
+      .input(
+        z.object({
+          tags: z.string().max(1000),
+        })
+      )
+      .mutation(async ({ input }) => {
+        await db.bulkUpdateProjectTags(input.tags);
+        return { success: true };
+      }),
   }),
 
   // ==========================================

@@ -400,6 +400,18 @@ export async function bulkUpdateTileSize(tileSize: string) {
   }
 }
 
+export async function bulkUpdateProjectTags(tags: string) {
+  const sb = getSupabaseAdmin();
+  const { error } = await sb
+    .from("projects")
+    .update({ tags, updated_at: new Date().toISOString() })
+    .neq("id", 0); // Update all rows
+  if (error) {
+    console.error('[DB] Failed to bulk update project tags:', error.message);
+    throw new Error('Failed to bulk update project tags');
+  }
+}
+
 // ==========================================
 // EXPERIENCES (Supabase)
 // ==========================================
