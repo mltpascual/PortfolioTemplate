@@ -329,4 +329,4 @@
 ## Phase 42: Switch logo/favicon to Concept 3
 - [x] Generate favicon sizes from Concept 3 (Circle Badge MP)
 - [x] Replace favicon files in client/public
-- [ ] Push to GitHub
+- [x] Push to GitHub
