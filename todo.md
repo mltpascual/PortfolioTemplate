@@ -284,4 +284,4 @@
 
 ## Phase 34: Add Home link to navbar
 - [x] Add Home nav link pointing to hero section
-- [ ] Push to GitHub
+- [x] Push to GitHub
