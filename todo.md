@@ -355,4 +355,4 @@
 - [x] Find all Manus storage image URLs in codebase (2 found: hero + about)
 - [x] Download images and store in repo (client/public/assets/)
 - [x] Update all image references to use local paths (/assets/hero-abstract.webp, /assets/about-visual.webp)
-- [ ] Push to GitHub
+- [x] Push to GitHub
