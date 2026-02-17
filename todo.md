@@ -325,3 +325,8 @@
 - [x] Upload logo to S3 and set as site logo
 - [x] Set favicon in the project
 - [x] Push to GitHub
+
+## Phase 42: Switch logo/favicon to Concept 3
+- [x] Generate favicon sizes from Concept 3 (Circle Badge MP)
+- [x] Replace favicon files in client/public
+- [ ] Push to GitHub
