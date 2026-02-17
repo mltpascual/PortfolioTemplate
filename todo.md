@@ -348,3 +348,11 @@
 
 ## Phase 45: Footer visual edit
 - [x] Remove logo + nav links row from footer (lines 56-79)
+
+## Phase 46: SEO meta tags + Move images to GitHub
+- [x] Add SEO meta tags (title, description, Open Graph, Twitter Card) to index.html
+- [x] Add JSON-LD structured data (Person + WebSite + ProfilePage schemas) for search visibility
+- [x] Find all Manus storage image URLs in codebase (2 found: hero + about)
+- [x] Download images and store in repo (client/public/assets/)
+- [x] Update all image references to use local paths (/assets/hero-abstract.webp, /assets/about-visual.webp)
+- [ ] Push to GitHub

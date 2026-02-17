@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { ArrowDown, Github, Linkedin, Mail, FileText } from "lucide-react";
 import type { PortfolioData } from "@/hooks/usePortfolio";
 
-const HERO_IMAGE = "https://private-us-east-1.manuscdn.com/sessionFile/td3PawS2CTYA7JoACPMNMZ/sandbox/l9YS4GhTwPQ9i9FbjWHhPd-img-1_1771203704000_na1fn_aGVyby1hYnN0cmFjdA.png?x-oss-process=image/resize,w_1920,h_1920/format,webp/quality,q_80&Expires=1798761600&Policy=eyJTdGF0ZW1lbnQiOlt7IlJlc291cmNlIjoiaHR0cHM6Ly9wcml2YXRlLXVzLWVhc3QtMS5tYW51c2Nkbi5jb20vc2Vzc2lvbkZpbGUvdGQzUGF3UzJDVFlBN0pvQUNQTU5NWi9zYW5kYm94L2w5WVM0R2hUd1BROWk5RmJqV0hoUGQtaW1nLTFfMTc3MTIwMzcwNDAwMF9uYTFmbl9hR1Z5YnkxaFluTjBjbUZqZEEucG5nP3gtb3NzLXByb2Nlc3M9aW1hZ2UvcmVzaXplLHdfMTkyMCxoXzE5MjAvZm9ybWF0LHdlYnAvcXVhbGl0eSxxXzgwIiwiQ29uZGl0aW9uIjp7IkRhdGVMZXNzVGhhbiI6eyJBV1M6RXBvY2hUaW1lIjoxNzk4NzYxNjAwfX19XX0_&Key-Pair-Id=K2HSFNDJXOU9YS&Signature=humMx5mo8MYSVnQVIEsvOwF8lCFzDKfiA1z2S9uDObgN8DaGt4uLifYa-Z9XAwYEEVnWwimi9Ephua7rrDqwwXlli8wT6~SRLQfYUJT1iTihpF-engSAr2P55ibsZo1qhpQudIwig66ChP3KzwQahOKnL7Lh-1DKcp5eJGFKf5xa6zZ1kJI45x-Nq~tHyFwp0lwEDAY2uHEfx95GKLGERb9zPpJwmdmJhTDiVjg7rIUthZZyHdQv86hXpx7Cj5GcPQrmDJ3mxeSq4YhRo8cSRqW0koLXNN6hcgkXCLsKLI4auFoDgr-gSQwS~HIfpqnQuGz-ZtUtcBUEp36cJz3iuQ__";
+const HERO_IMAGE = "/assets/hero-abstract.webp";
 
 interface HeroSectionProps {
   profile: PortfolioData["profile"];
