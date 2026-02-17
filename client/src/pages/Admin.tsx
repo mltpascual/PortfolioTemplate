@@ -949,7 +949,7 @@ function ImageUploadField({ label, value, onChange }: { label: string; value: st
           <img
             src={value}
             alt="Preview"
-            className="w-full max-h-48 object-cover rounded-xl border border-warm-200"
+            className="w-full max-h-48 object-cover object-top rounded-xl border border-warm-200"
           />
           <button
             type="button"

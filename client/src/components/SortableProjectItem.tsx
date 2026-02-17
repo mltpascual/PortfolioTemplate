@@ -58,7 +58,7 @@ export function SortableProjectItem({ project, onEdit, onDelete }: SortableProje
           <img
             src={project.imageUrl}
             alt={project.title}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover object-top"
             loading="lazy"
           />
         ) : (

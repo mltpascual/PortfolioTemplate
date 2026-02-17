@@ -289,3 +289,8 @@
 ## Phase 35: Bulk update all project tags
 - [x] Update all project tags to React, TypeScript, JavaScript, CSS, HTML, SEO
 - [x] Push to GitHub
+
+## Phase 36: Fix project image positioning
+- [x] Fix project image object-position in admin panel (show top/header of image)
+- [x] Fix project image object-position in homepage (already had object-top)
+- [ ] Push to GitHub
