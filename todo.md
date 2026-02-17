@@ -311,3 +311,11 @@
 - [x] Skills tab: add list/tile view toggle + DragOverlay + TouchSensor
 - [x] Education tab: add list/tile view toggle + DragOverlay + TouchSensor
 - [x] Push to GitHub
+
+## Phase 40: Duplicate buttons + Live Demo alignment fix
+- [x] Add duplicate button to Projects admin (tile + list views)
+- [x] Add duplicate button to Experience admin (tile + list views)
+- [x] Add duplicate button to Skills admin (tile + list views)
+- [x] Add duplicate button to Education admin (tile + list views)
+- [x] Fix homepage project card Live Demo button alignment (always at bottom)
+- [ ] Push to GitHub

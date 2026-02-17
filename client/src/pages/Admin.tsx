@@ -40,6 +40,7 @@ import {
   ArrowUp,
   ArrowDown,
   Type,
+  Copy,
 } from "lucide-react";
 import {
   DndContext,
@@ -325,6 +326,20 @@ function ProjectsTab() {
     setForm({ title: "", description: "", imageUrl: "", liveUrl: "", githubUrl: "", tags: "", featured: 0, tileSize: "medium", sortOrder: (projects?.length || 0) + 1 });
   };
 
+  const duplicateProject = (project: any) => {
+    createProject.mutate({
+      title: `${project.title} (Copy)`,
+      description: project.description || "",
+      imageUrl: project.imageUrl || "",
+      liveUrl: project.liveUrl || "",
+      githubUrl: project.githubUrl || "",
+      tags: project.tags || "",
+      featured: 0,
+      tileSize: project.tileSize || "medium",
+      sortOrder: (projects?.length || 0) + 1,
+    });
+  };
+
   const handleSave = () => {
     const payload = { ...form, tileSize: form.tileSize as any };
     if (editing === "new") {
@@ -533,6 +548,7 @@ function ProjectsTab() {
                     project={project}
                     onEdit={startEdit}
                     onDelete={(id) => deleteProject.mutate({ id })}
+                    onDuplicate={duplicateProject}
                   />
                 ))}
               </div>
@@ -544,6 +560,7 @@ function ProjectsTab() {
                     project={project}
                     onEdit={startEdit}
                     onDelete={(id) => deleteProject.mutate({ id })}
+                    onDuplicate={duplicateProject}
                   />
                 ))}
               </div>
@@ -608,7 +625,7 @@ function ProjectsTab() {
 // ============================================================
 // SORTABLE PROJECT LIST ITEM (compact list view)
 // ============================================================
-function SortableProjectListItem({ project, onEdit, onDelete }: {
+function SortableProjectListItem({ project, onEdit, onDelete, onDuplicate }: {
   project: {
     id: number;
     title: string;
@@ -623,6 +640,7 @@ function SortableProjectListItem({ project, onEdit, onDelete }: {
   };
   onEdit: (project: any) => void;
   onDelete: (id: number) => void;
+  onDuplicate?: (project: any) => void;
 }) {
   const {
     attributes,
@@ -711,6 +729,15 @@ function SortableProjectListItem({ project, onEdit, onDelete }: {
 
       {/* Actions */}
       <div className="flex items-center gap-1 shrink-0">
+        {onDuplicate && (
+          <button
+            onClick={() => onDuplicate(project)}
+            className="p-1.5 rounded-full hover:bg-warm-100 transition-colors"
+            title="Duplicate"
+          >
+            <Copy className="w-3.5 h-3.5 text-charcoal-light" />
+          </button>
+        )}
         <button
           onClick={() => onEdit(project)}
           className="p-1.5 rounded-full hover:bg-warm-100 transition-colors"
@@ -781,6 +808,18 @@ function ExperienceTab() {
   const handleSave = () => {
     if (editing === "new") createExp.mutate(form);
     else if (typeof editing === "number") updateExp.mutate({ id: editing, ...form });
+  };
+
+  const duplicateExp = (exp: any) => {
+    createExp.mutate({
+      role: `${exp.role} (Copy)`,
+      company: exp.company || "",
+      period: exp.period || "",
+      description: exp.description || "",
+      tags: exp.tags || "",
+      logoUrl: exp.logoUrl || "",
+      sortOrder: (experiences?.length || 0) + 1,
+    });
   };
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
@@ -862,13 +901,13 @@ function ExperienceTab() {
             {viewMode === "tile" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {experiences.map((exp) => (
-                  <SortableExpTile key={exp.id} exp={exp} onEdit={startEdit} onDelete={(id: number) => { if (confirm("Delete?")) deleteExp.mutate({ id }); }} />
+                  <SortableExpTile key={exp.id} exp={exp} onEdit={startEdit} onDelete={(id: number) => { if (confirm("Delete?")) deleteExp.mutate({ id }); }} onDuplicate={duplicateExp} />
                 ))}
               </div>
             ) : (
               <div className="space-y-2">
                 {experiences.map((exp) => (
-                  <SortableExpListItem key={exp.id} exp={exp} onEdit={startEdit} onDelete={(id: number) => { if (confirm("Delete?")) deleteExp.mutate({ id }); }} />
+                  <SortableExpListItem key={exp.id} exp={exp} onEdit={startEdit} onDelete={(id: number) => { if (confirm("Delete?")) deleteExp.mutate({ id }); }} onDuplicate={duplicateExp} />
                 ))}
               </div>
             )}
@@ -900,7 +939,7 @@ function ExperienceTab() {
 }
 
 // Sortable experience tile card
-function SortableExpTile({ exp, onEdit, onDelete }: { exp: any; onEdit: (e: any) => void; onDelete: (id: number) => void }) {
+function SortableExpTile({ exp, onEdit, onDelete, onDuplicate }: { exp: any; onEdit: (e: any) => void; onDelete: (id: number) => void; onDuplicate?: (e: any) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: exp.id });
   const style = { transform: CSS.Transform.toString(transform), transition: transition || "transform 200ms ease", opacity: isDragging ? 0.3 : 1 };
   const tags = exp.tags ? exp.tags.split(",").map((t: string) => t.trim()).filter(Boolean) : [];
@@ -923,6 +962,7 @@ function SortableExpTile({ exp, onEdit, onDelete }: { exp: any; onEdit: (e: any)
         </div>
       )}
       <div className="flex gap-2 pt-1">
+        {onDuplicate && <button onClick={() => onDuplicate(exp)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all flex items-center gap-1"><Copy className="w-3 h-3" />Duplicate</button>}
         <button onClick={() => onEdit(exp)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all flex items-center gap-1"><Pencil className="w-3 h-3" />Edit</button>
         <button onClick={() => onDelete(exp.id)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-red-500 hover:border-red-300 transition-all flex items-center gap-1"><Trash2 className="w-3 h-3" />Delete</button>
       </div>
@@ -931,7 +971,7 @@ function SortableExpTile({ exp, onEdit, onDelete }: { exp: any; onEdit: (e: any)
 }
 
 // Sortable experience list item
-function SortableExpListItem({ exp, onEdit, onDelete }: { exp: any; onEdit: (e: any) => void; onDelete: (id: number) => void }) {
+function SortableExpListItem({ exp, onEdit, onDelete, onDuplicate }: { exp: any; onEdit: (e: any) => void; onDelete: (id: number) => void; onDuplicate?: (e: any) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: exp.id });
   const style = { transform: CSS.Transform.toString(transform), transition: transition || "transform 200ms ease", opacity: isDragging ? 0.3 : 1 };
   return (
@@ -947,6 +987,7 @@ function SortableExpListItem({ exp, onEdit, onDelete }: { exp: any; onEdit: (e: 
         <p className="text-xs text-terracotta truncate" style={{ fontFamily: "var(--font-body)" }}>{exp.company} &middot; {exp.period}</p>
       </div>
       <div className="flex items-center gap-1 shrink-0">
+        {onDuplicate && <button onClick={() => onDuplicate(exp)} className="p-1.5 rounded-full hover:bg-warm-100 transition-colors" title="Duplicate"><Copy className="w-3.5 h-3.5 text-charcoal-light" /></button>}
         <button onClick={() => onEdit(exp)} className="p-1.5 rounded-full hover:bg-warm-100 transition-colors"><Pencil className="w-3.5 h-3.5 text-charcoal-light" /></button>
         <button onClick={() => onDelete(exp.id)} className="p-1.5 rounded-full hover:bg-red-50 transition-colors"><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>
       </div>
@@ -1005,6 +1046,15 @@ function SkillsTab() {
   const handleSave = () => {
     if (editing === "new") createSkill.mutate(form);
     else if (typeof editing === "number") updateSkill.mutate({ id: editing, ...form });
+  };
+
+  const duplicateSkill = (skill: any) => {
+    createSkill.mutate({
+      title: `${skill.title} (Copy)`,
+      icon: skill.icon || "Code2",
+      skills: skill.skills || "",
+      sortOrder: (skills?.length || 0) + 1,
+    });
   };
 
   const handleDragEnd = useCallback((event: DragEndEvent) => {
@@ -1100,13 +1150,13 @@ function SkillsTab() {
             {viewMode === "tile" ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {skills.map((skill) => (
-                  <SortableSkillTile key={skill.id} skill={skill} onEdit={startEdit} onDelete={(id: number) => { if (confirm("Delete?")) deleteSkill.mutate({ id }); }} />
+                  <SortableSkillTile key={skill.id} skill={skill} onEdit={startEdit} onDelete={(id: number) => { if (confirm("Delete?")) deleteSkill.mutate({ id }); }} onDuplicate={duplicateSkill} />
                 ))}
               </div>
             ) : (
               <div className="space-y-2">
                 {skills.map((skill) => (
-                  <SortableSkillListItem key={skill.id} skill={skill} onEdit={startEdit} onDelete={(id: number) => { if (confirm("Delete?")) deleteSkill.mutate({ id }); }} />
+                  <SortableSkillListItem key={skill.id} skill={skill} onEdit={startEdit} onDelete={(id: number) => { if (confirm("Delete?")) deleteSkill.mutate({ id }); }} onDuplicate={duplicateSkill} />
                 ))}
               </div>
             )}
@@ -1137,7 +1187,7 @@ function SkillsTab() {
 }
 
 // Sortable skill tile card
-function SortableSkillTile({ skill, onEdit, onDelete }: { skill: any; onEdit: (s: any) => void; onDelete: (id: number) => void }) {
+function SortableSkillTile({ skill, onEdit, onDelete, onDuplicate }: { skill: any; onEdit: (s: any) => void; onDelete: (id: number) => void; onDuplicate?: (s: any) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: skill.id });
   const style = { transform: CSS.Transform.toString(transform), transition: transition || "transform 200ms ease", opacity: isDragging ? 0.3 : 1 };
   const skillList = skill.skills ? skill.skills.split(",").map((s: string) => s.trim()).filter(Boolean) : [];
@@ -1159,6 +1209,7 @@ function SortableSkillTile({ skill, onEdit, onDelete }: { skill: any; onEdit: (s
         </div>
       )}
       <div className="flex gap-2 pt-1">
+        {onDuplicate && <button onClick={() => onDuplicate(skill)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all flex items-center gap-1"><Copy className="w-3 h-3" />Duplicate</button>}
         <button onClick={() => onEdit(skill)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all flex items-center gap-1"><Pencil className="w-3 h-3" />Edit</button>
         <button onClick={() => onDelete(skill.id)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-red-500 hover:border-red-300 transition-all flex items-center gap-1"><Trash2 className="w-3 h-3" />Delete</button>
       </div>
@@ -1167,7 +1218,7 @@ function SortableSkillTile({ skill, onEdit, onDelete }: { skill: any; onEdit: (s
 }
 
 // Sortable skill list item
-function SortableSkillListItem({ skill, onEdit, onDelete }: { skill: any; onEdit: (s: any) => void; onDelete: (id: number) => void }) {
+function SortableSkillListItem({ skill, onEdit, onDelete, onDuplicate }: { skill: any; onEdit: (s: any) => void; onDelete: (id: number) => void; onDuplicate?: (s: any) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: skill.id });
   const style = { transform: CSS.Transform.toString(transform), transition: transition || "transform 200ms ease", opacity: isDragging ? 0.3 : 1 };
   return (
@@ -1179,6 +1230,7 @@ function SortableSkillListItem({ skill, onEdit, onDelete }: { skill: any; onEdit
         <p className="text-xs text-charcoal-light truncate" style={{ fontFamily: "var(--font-body)" }}>{skill.skills || "No skills listed"}</p>
       </div>
       <div className="flex items-center gap-1 shrink-0">
+        {onDuplicate && <button onClick={() => onDuplicate(skill)} className="p-1.5 rounded-full hover:bg-warm-100 transition-colors" title="Duplicate"><Copy className="w-3.5 h-3.5 text-charcoal-light" /></button>}
         <button onClick={() => onEdit(skill)} className="p-1.5 rounded-full hover:bg-warm-100 transition-colors"><Pencil className="w-3.5 h-3.5 text-charcoal-light" /></button>
         <button onClick={() => onDelete(skill.id)} className="p-1.5 rounded-full hover:bg-red-50 transition-colors"><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>
       </div>
@@ -1530,6 +1582,19 @@ function EducationTab() {
     }
   }
 
+  function duplicateEdu(edu: any) {
+    createMutation.mutate({
+      institution: `${edu.institution} (Copy)`,
+      degree: edu.degree || "",
+      fieldOfStudy: edu.fieldOfStudy || undefined,
+      startYear: edu.startYear || new Date().getFullYear(),
+      endYear: edu.endYear || null,
+      description: edu.description || undefined,
+      logoUrl: edu.logoUrl || undefined,
+      sortOrder: (educationList?.length || 0) + 1,
+    });
+  }
+
   const handleDragEnd = useCallback((event: DragEndEvent) => {
     const { active, over } = event;
     if (!over || active.id === over.id || !educationList) return;
@@ -1572,13 +1637,13 @@ function EducationTab() {
             {viewMode === "tile" ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {educationList.map((edu: any) => (
-                  <SortableEduTile key={edu.id} edu={edu} onEdit={openEdit} onDelete={(id: number) => { if (confirm("Delete this education entry?")) deleteMutation.mutate({ id }); }} />
+                  <SortableEduTile key={edu.id} edu={edu} onEdit={openEdit} onDelete={(id: number) => { if (confirm("Delete this education entry?")) deleteMutation.mutate({ id }); }} onDuplicate={duplicateEdu} />
                 ))}
               </div>
             ) : (
               <div className="space-y-2">
                 {educationList.map((edu: any) => (
-                  <SortableEduListItem key={edu.id} edu={edu} onEdit={openEdit} onDelete={(id: number) => { if (confirm("Delete this education entry?")) deleteMutation.mutate({ id }); }} />
+                  <SortableEduListItem key={edu.id} edu={edu} onEdit={openEdit} onDelete={(id: number) => { if (confirm("Delete this education entry?")) deleteMutation.mutate({ id }); }} onDuplicate={duplicateEdu} />
                 ))}
               </div>
             )}
@@ -1648,7 +1713,7 @@ function EducationTab() {
 }
 
 // Sortable education tile card
-function SortableEduTile({ edu, onEdit, onDelete }: { edu: any; onEdit: (e: any) => void; onDelete: (id: number) => void }) {
+function SortableEduTile({ edu, onEdit, onDelete, onDuplicate }: { edu: any; onEdit: (e: any) => void; onDelete: (id: number) => void; onDuplicate?: (e: any) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: edu.id });
   const style = { transform: CSS.Transform.toString(transform), transition: transition || "transform 200ms ease", opacity: isDragging ? 0.3 : 1 };
   return (
@@ -1668,6 +1733,7 @@ function SortableEduTile({ edu, onEdit, onDelete }: { edu: any; onEdit: (e: any)
       </div>
       {edu.description && <p className="text-sm text-charcoal-light line-clamp-2" style={{ fontFamily: "var(--font-body)" }}>{edu.description}</p>}
       <div className="flex gap-2 pt-1">
+        {onDuplicate && <button onClick={() => onDuplicate(edu)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all flex items-center gap-1"><Copy className="w-3 h-3" />Duplicate</button>}
         <button onClick={() => onEdit(edu)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all flex items-center gap-1"><Pencil className="w-3 h-3" />Edit</button>
         <button onClick={() => onDelete(edu.id)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-red-500 hover:border-red-300 transition-all flex items-center gap-1"><Trash2 className="w-3 h-3" />Delete</button>
       </div>
@@ -1676,7 +1742,7 @@ function SortableEduTile({ edu, onEdit, onDelete }: { edu: any; onEdit: (e: any)
 }
 
 // Sortable education list item
-function SortableEduListItem({ edu, onEdit, onDelete }: { edu: any; onEdit: (e: any) => void; onDelete: (id: number) => void }) {
+function SortableEduListItem({ edu, onEdit, onDelete, onDuplicate }: { edu: any; onEdit: (e: any) => void; onDelete: (id: number) => void; onDuplicate?: (e: any) => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: edu.id });
   const style = { transform: CSS.Transform.toString(transform), transition: transition || "transform 200ms ease", opacity: isDragging ? 0.3 : 1 };
   return (
@@ -1692,6 +1758,7 @@ function SortableEduListItem({ edu, onEdit, onDelete }: { edu: any; onEdit: (e: 
         <p className="text-xs text-terracotta truncate" style={{ fontFamily: "var(--font-body)" }}>{edu.institution} &middot; {edu.startYear}—{edu.endYear || "Present"}</p>
       </div>
       <div className="flex items-center gap-1 shrink-0">
+        {onDuplicate && <button onClick={() => onDuplicate(edu)} className="p-1.5 rounded-full hover:bg-warm-100 transition-colors" title="Duplicate"><Copy className="w-3.5 h-3.5 text-charcoal-light" /></button>}
         <button onClick={() => onEdit(edu)} className="p-1.5 rounded-full hover:bg-warm-100 transition-colors"><Pencil className="w-3.5 h-3.5 text-charcoal-light" /></button>
         <button onClick={() => onDelete(edu.id)} className="p-1.5 rounded-full hover:bg-red-50 transition-colors"><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>
       </div>

@@ -6,7 +6,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Pencil, Trash2, FolderOpen, ExternalLink, Github } from "lucide-react";
+import { GripVertical, Pencil, Trash2, FolderOpen, ExternalLink, Github, Copy } from "lucide-react";
 
 interface SortableProjectItemProps {
   project: {
@@ -23,9 +23,10 @@ interface SortableProjectItemProps {
   };
   onEdit: (project: any) => void;
   onDelete: (id: number) => void;
+  onDuplicate?: (project: any) => void;
 }
 
-export function SortableProjectItem({ project, onEdit, onDelete }: SortableProjectItemProps) {
+export function SortableProjectItem({ project, onEdit, onDelete, onDuplicate }: SortableProjectItemProps) {
   const {
     attributes,
     listeners,
@@ -153,6 +154,15 @@ export function SortableProjectItem({ project, onEdit, onDelete }: SortableProje
             )}
           </div>
           <div className="flex items-center gap-1">
+            {onDuplicate && (
+              <button
+                onClick={() => onDuplicate(project)}
+                className="p-1.5 rounded-full hover:bg-warm-100 transition-colors"
+                title="Duplicate"
+              >
+                <Copy className="w-3.5 h-3.5 text-charcoal-light" />
+              </button>
+            )}
             <button
               onClick={() => onEdit(project)}
               className="p-1.5 rounded-full hover:bg-warm-100 transition-colors"

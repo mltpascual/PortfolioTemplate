@@ -101,7 +101,7 @@ function ProjectCard({ project, index }: { project: PortfolioData["projects"][nu
   return (
     <div
       ref={ref}
-      className={`group warm-card overflow-hidden transition-all duration-600 ${
+      className={`group warm-card overflow-hidden transition-all duration-600 flex flex-col ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       }`}
     >
@@ -113,7 +113,7 @@ function ProjectCard({ project, index }: { project: PortfolioData["projects"][nu
       />
 
       {/* Content */}
-      <div className="p-5 sm:p-6">
+      <div className="p-5 sm:p-6 flex flex-col flex-1">
         {project.featured === 1 && (
           <span
             className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-terracotta/10 text-terracotta text-[10px] font-semibold mb-2"
@@ -152,8 +152,11 @@ function ProjectCard({ project, index }: { project: PortfolioData["projects"][nu
           </div>
         )}
 
+        {/* Spacer to push actions to bottom */}
+        <div className="flex-1" />
+
         {/* Actions */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 mt-auto">
           {safeLiveUrl && safeLiveUrl !== "#" && (
             <a
               href={safeLiveUrl}
