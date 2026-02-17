@@ -344,4 +344,4 @@
 - [x] Docs Phase 4: Update README.md
 - [x] Find bugs (find-bugs + e2e testing patterns)
 - [x] Fix bugs found (reorderSkills used wrong table 'skills' → 'skill_categories')
-- [ ] Push to GitHub
+- [x] Push to GitHub
