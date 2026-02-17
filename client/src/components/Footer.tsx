@@ -7,14 +7,6 @@ import { useEffect, useRef, useState } from "react";
 import { Github, Linkedin, Mail, Twitter } from "lucide-react";
 import type { PortfolioData } from "@/hooks/usePortfolio";
 
-const footerLinks = [
-  { label: "About", href: "#about" },
-  { label: "Skills", href: "#skills" },
-  { label: "Projects", href: "#projects" },
-  { label: "Experience", href: "#experience" },
-  { label: "Contact", href: "#contact" },
-];
-
 interface FooterProps {
   profile: PortfolioData["profile"];
 }
@@ -53,32 +45,7 @@ export default function Footer({ profile }: FooterProps) {
       className={`border-t border-warm-200 bg-warm-50/30 transition-all duration-700 ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
     >
       <div className="container py-12 md:py-16">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-10">
-          {/* Logo */}
-          <a
-            href="#"
-            className="text-2xl tracking-tight text-charcoal"
-            style={{ fontFamily: "var(--font-display)" }}
-          >
-            {displayName}
-          </a>
-
-          {/* Nav */}
-          <nav className="flex flex-wrap items-center gap-6">
-            {footerLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="text-sm text-charcoal-light hover:text-terracotta transition-colors"
-                style={{ fontFamily: "var(--font-body)" }}
-              >
-                {link.label}
-              </a>
-            ))}
-          </nav>
-        </div>
-
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 pt-8 border-t border-warm-200/60">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <p
             className="text-sm text-charcoal-light"
             style={{ fontFamily: "var(--font-body)" }}

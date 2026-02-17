@@ -345,3 +345,6 @@
 - [x] Find bugs (find-bugs + e2e testing patterns)
 - [x] Fix bugs found (reorderSkills used wrong table 'skills' → 'skill_categories')
 - [x] Push to GitHub
+
+## Phase 45: Footer visual edit
+- [x] Remove logo + nav links row from footer (lines 56-79)
