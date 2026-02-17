@@ -324,4 +324,4 @@
 - [x] Generate favicon (ICO/PNG) from Concept 5
 - [x] Upload logo to S3 and set as site logo
 - [x] Set favicon in the project
-- [ ] Push to GitHub
+- [x] Push to GitHub
