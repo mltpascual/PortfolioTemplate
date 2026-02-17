@@ -318,4 +318,4 @@
 - [x] Add duplicate button to Skills admin (tile + list views)
 - [x] Add duplicate button to Education admin (tile + list views)
 - [x] Fix homepage project card Live Demo button alignment (always at bottom)
-- [ ] Push to GitHub
+- [x] Push to GitHub
