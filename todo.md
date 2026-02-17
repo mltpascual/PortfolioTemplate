@@ -319,3 +319,9 @@
 - [x] Add duplicate button to Education admin (tile + list views)
 - [x] Fix homepage project card Live Demo button alignment (always at bottom)
 - [x] Push to GitHub
+
+## Phase 41: Set logo and favicon
+- [x] Generate favicon (ICO/PNG) from Concept 5
+- [x] Upload logo to S3 and set as site logo
+- [x] Set favicon in the project
+- [ ] Push to GitHub

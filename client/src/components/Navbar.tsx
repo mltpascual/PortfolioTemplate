@@ -206,9 +206,10 @@ export default function Navbar({ profile, hiddenSections = new Set() }: NavbarPr
             window.scrollTo({ top: 0, behavior: "smooth" });
             setActiveSection("");
           }}
-          className="text-xl md:text-2xl tracking-tight text-charcoal"
+          className="flex items-center gap-2 text-xl md:text-2xl tracking-tight text-charcoal"
           style={{ fontFamily: "var(--font-display)" }}
         >
+          <img src="/favicon-192.png" alt="Logo" className="w-8 h-8 md:w-9 md:h-9 rounded-md" />
           {displayName}
         </a>
 
