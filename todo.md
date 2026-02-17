@@ -310,4 +310,4 @@
 - [x] Experience tab: add list/tile view toggle + DragOverlay + TouchSensor
 - [x] Skills tab: add list/tile view toggle + DragOverlay + TouchSensor
 - [x] Education tab: add list/tile view toggle + DragOverlay + TouchSensor
-- [ ] Push to GitHub
+- [x] Push to GitHub
