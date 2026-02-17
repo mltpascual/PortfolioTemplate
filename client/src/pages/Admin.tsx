@@ -750,9 +750,23 @@ function ExperienceTab() {
     onSuccess: () => { toast.success("Experience deleted!"); utils.adminExperiences.list.invalidate(); utils.portfolio.getAll.invalidate(); },
     onError: (err) => toast.error(err.message),
   });
+  const reorderExp = trpc.adminExperiences.reorder.useMutation({
+    onSuccess: () => { utils.adminExperiences.list.invalidate(); utils.portfolio.getAll.invalidate(); },
+    onError: (err) => toast.error(err.message),
+  });
 
   const [editing, setEditing] = useState<number | "new" | null>(null);
   const [form, setForm] = useState({ role: "", company: "", period: "", description: "", tags: "", logoUrl: "", sortOrder: 0 });
+  const [viewMode, setViewMode] = useState<"tile" | "list">("list");
+  const [activeDragId, setActiveDragId] = useState<number | null>(null);
+
+  const expSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const activeDragExp = activeDragId ? experiences?.find((e) => e.id === activeDragId) ?? null : null;
 
   const startEdit = (exp: any) => {
     setEditing(exp.id);
@@ -769,14 +783,31 @@ function ExperienceTab() {
     else if (typeof editing === "number") updateExp.mutate({ id: editing, ...form });
   };
 
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !experiences) return;
+    const oldIndex = experiences.findIndex((e) => e.id === active.id);
+    const newIndex = experiences.findIndex((e) => e.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(experiences, oldIndex, newIndex);
+    const items = reordered.map((e, i) => ({ id: e.id, sortOrder: i + 1 }));
+    reorderExp.mutate({ items });
+  }, [experiences, reorderExp]);
+
   if (isLoading) return <LoadingSpinner />;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
-          {experiences?.length || 0} experience{(experiences?.length || 0) !== 1 ? "s" : ""}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
+            {experiences?.length || 0} experience{(experiences?.length || 0) !== 1 ? "s" : ""}
+          </p>
+          <div className="flex items-center bg-warm-100 rounded-full p-0.5">
+            <button onClick={() => setViewMode("tile")} className={`p-1.5 rounded-full transition-colors ${viewMode === "tile" ? "bg-white text-terracotta shadow-sm" : "text-charcoal-light hover:text-charcoal"}`} title="Tile view"><LayoutGrid className="w-3.5 h-3.5" /></button>
+            <button onClick={() => setViewMode("list")} className={`p-1.5 rounded-full transition-colors ${viewMode === "list" ? "bg-white text-terracotta shadow-sm" : "text-charcoal-light hover:text-charcoal"}`} title="List view"><List className="w-3.5 h-3.5" /></button>
+          </div>
+        </div>
         <button onClick={startNew} className="pill-primary-sm gap-2">
           <Plus className="w-4 h-4" />
           Add Experience
@@ -819,26 +850,105 @@ function ExperienceTab() {
         </DialogContent>
       </Dialog>
 
-      <div className="space-y-3">
-        {experiences?.map((exp) => (
-          <div key={exp.id} className="warm-card p-4 flex items-center gap-4">
-            <GripVertical className="w-4 h-4 text-warm-300 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <h4 className="text-base text-charcoal truncate" style={{ fontFamily: "var(--font-display)" }}>{exp.role}</h4>
-              <p className="text-sm text-terracotta" style={{ fontFamily: "var(--font-body)" }}>{exp.company} &middot; {exp.period}</p>
+      {experiences && experiences.length > 0 ? (
+        <DndContext
+          sensors={expSensors}
+          collisionDetection={closestCenter}
+          onDragStart={(event) => setActiveDragId(event.active.id as number)}
+          onDragEnd={(event) => { setActiveDragId(null); handleDragEnd(event); }}
+          onDragCancel={() => setActiveDragId(null)}
+        >
+          <SortableContext items={experiences.map((e) => e.id)} strategy={viewMode === "tile" ? rectSortingStrategy : verticalListSortingStrategy}>
+            {viewMode === "tile" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {experiences.map((exp) => (
+                  <SortableExpTile key={exp.id} exp={exp} onEdit={startEdit} onDelete={(id: number) => { if (confirm("Delete?")) deleteExp.mutate({ id }); }} />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {experiences.map((exp) => (
+                  <SortableExpListItem key={exp.id} exp={exp} onEdit={startEdit} onDelete={(id: number) => { if (confirm("Delete?")) deleteExp.mutate({ id }); }} />
+                ))}
+              </div>
+            )}
+          </SortableContext>
+          <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>
+            {activeDragExp ? (
+              <div className="warm-card p-3 flex items-center gap-3 shadow-xl ring-2 ring-terracotta/30">
+                <GripVertical className="w-4 h-4 text-warm-400 shrink-0" />
+                <span className="text-sm font-medium text-charcoal truncate" style={{ fontFamily: "var(--font-display)" }}>
+                  {activeDragExp.role} — {activeDragExp.company}
+                </span>
+              </div>
+            ) : null}
+          </DragOverlay>
+          {reorderExp.isPending && (
+            <div className="flex items-center justify-center gap-2 py-2 text-sm text-charcoal-light">
+              <Loader2 className="w-4 h-4 animate-spin" /> Saving order...
             </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <button onClick={() => startEdit(exp)} className="p-2 rounded-full hover:bg-warm-100 transition-colors"><Pencil className="w-4 h-4 text-charcoal-light" /></button>
-              <button onClick={() => { if (confirm("Delete?")) deleteExp.mutate({ id: exp.id }); }} className="p-2 rounded-full hover:bg-red-50 transition-colors"><Trash2 className="w-4 h-4 text-red-400" /></button>
-            </div>
-          </div>
-        ))}
-        {(!experiences || experiences.length === 0) && (
-          <div className="text-center py-12 text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
-            <Briefcase className="w-10 h-10 mx-auto mb-3 text-warm-300" />
-            <p>No experiences yet. Add your first one above.</p>
-          </div>
-        )}
+          )}
+        </DndContext>
+      ) : (
+        <div className="text-center py-12 text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
+          <Briefcase className="w-10 h-10 mx-auto mb-3 text-warm-300" />
+          <p>No experiences yet. Add your first one above.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Sortable experience tile card
+function SortableExpTile({ exp, onEdit, onDelete }: { exp: any; onEdit: (e: any) => void; onDelete: (id: number) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: exp.id });
+  const style = { transform: CSS.Transform.toString(transform), transition: transition || "transform 200ms ease", opacity: isDragging ? 0.3 : 1 };
+  const tags = exp.tags ? exp.tags.split(",").map((t: string) => t.trim()).filter(Boolean) : [];
+  return (
+    <div ref={setNodeRef} style={style} className={`warm-card p-5 space-y-3 ${isDragging ? "ring-2 ring-terracotta/30" : ""}`}>
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <h4 className="text-base text-charcoal truncate" style={{ fontFamily: "var(--font-display)" }}>{exp.role}</h4>
+          <p className="text-sm text-terracotta" style={{ fontFamily: "var(--font-body)" }}>{exp.company} &middot; {exp.period}</p>
+        </div>
+        <button {...attributes} {...listeners} className="p-1 rounded-md text-warm-400 hover:text-charcoal cursor-grab active:cursor-grabbing touch-none shrink-0"><GripVertical className="w-4 h-4" /></button>
+      </div>
+      {exp.description && <p className="text-sm text-charcoal-light line-clamp-2" style={{ fontFamily: "var(--font-body)" }}>{exp.description}</p>}
+      {tags.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {tags.slice(0, 4).map((tag: string) => (
+            <span key={tag} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-warm-50 text-charcoal-light border border-warm-200/60">{tag}</span>
+          ))}
+          {tags.length > 4 && <span className="text-[10px] text-charcoal-light">+{tags.length - 4}</span>}
+        </div>
+      )}
+      <div className="flex gap-2 pt-1">
+        <button onClick={() => onEdit(exp)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all flex items-center gap-1"><Pencil className="w-3 h-3" />Edit</button>
+        <button onClick={() => onDelete(exp.id)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-red-500 hover:border-red-300 transition-all flex items-center gap-1"><Trash2 className="w-3 h-3" />Delete</button>
+      </div>
+    </div>
+  );
+}
+
+// Sortable experience list item
+function SortableExpListItem({ exp, onEdit, onDelete }: { exp: any; onEdit: (e: any) => void; onDelete: (id: number) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: exp.id });
+  const style = { transform: CSS.Transform.toString(transform), transition: transition || "transform 200ms ease", opacity: isDragging ? 0.3 : 1 };
+  return (
+    <div ref={setNodeRef} style={style} className={`warm-card p-3 flex items-center gap-3 ${isDragging ? "shadow-lg ring-2 ring-terracotta/30" : ""}`}>
+      <button {...attributes} {...listeners} className="p-1 rounded-md text-warm-400 hover:text-charcoal hover:bg-warm-100 transition-colors cursor-grab active:cursor-grabbing touch-none shrink-0"><GripVertical className="w-4 h-4" /></button>
+      {exp.logoUrl ? (
+        <img src={exp.logoUrl} alt="" className="w-10 h-10 rounded-md object-cover shrink-0" />
+      ) : (
+        <div className="w-10 h-10 rounded-md bg-warm-100 flex items-center justify-center shrink-0"><Briefcase className="w-5 h-5 text-warm-300" /></div>
+      )}
+      <div className="flex-1 min-w-0">
+        <h4 className="text-sm font-medium text-charcoal truncate" style={{ fontFamily: "var(--font-display)" }}>{exp.role}</h4>
+        <p className="text-xs text-terracotta truncate" style={{ fontFamily: "var(--font-body)" }}>{exp.company} &middot; {exp.period}</p>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <button onClick={() => onEdit(exp)} className="p-1.5 rounded-full hover:bg-warm-100 transition-colors"><Pencil className="w-3.5 h-3.5 text-charcoal-light" /></button>
+        <button onClick={() => onDelete(exp.id)} className="p-1.5 rounded-full hover:bg-red-50 transition-colors"><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>
       </div>
     </div>
   );
@@ -862,11 +972,25 @@ function SkillsTab() {
     onSuccess: () => { toast.success("Skill category deleted!"); utils.adminSkills.list.invalidate(); utils.portfolio.getAll.invalidate(); },
     onError: (err) => toast.error(err.message),
   });
+  const reorderSkills = trpc.adminSkills.reorder.useMutation({
+    onSuccess: () => { utils.adminSkills.list.invalidate(); utils.portfolio.getAll.invalidate(); },
+    onError: (err) => toast.error(err.message),
+  });
 
   const iconOptions = ["Code2", "Server", "Database", "Globe", "Smartphone", "Palette", "Terminal", "Layers", "Cpu", "Cloud", "Shield", "Zap"];
 
   const [editing, setEditing] = useState<number | "new" | null>(null);
   const [form, setForm] = useState({ title: "", icon: "Code2", skills: "", sortOrder: 0 });
+  const [viewMode, setViewMode] = useState<"tile" | "list">("list");
+  const [activeDragId, setActiveDragId] = useState<number | null>(null);
+
+  const skillSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const activeDragSkill = activeDragId ? skills?.find((s) => s.id === activeDragId) ?? null : null;
 
   const startEdit = (skill: any) => {
     setEditing(skill.id);
@@ -883,14 +1007,31 @@ function SkillsTab() {
     else if (typeof editing === "number") updateSkill.mutate({ id: editing, ...form });
   };
 
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !skills) return;
+    const oldIndex = skills.findIndex((s) => s.id === active.id);
+    const newIndex = skills.findIndex((s) => s.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(skills, oldIndex, newIndex);
+    const items = reordered.map((s, i) => ({ id: s.id, sortOrder: i + 1 }));
+    reorderSkills.mutate({ items });
+  }, [skills, reorderSkills]);
+
   if (isLoading) return <LoadingSpinner />;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
-          {skills?.length || 0} categor{(skills?.length || 0) !== 1 ? "ies" : "y"}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
+            {skills?.length || 0} categor{(skills?.length || 0) !== 1 ? "ies" : "y"}
+          </p>
+          <div className="flex items-center bg-warm-100 rounded-full p-0.5">
+            <button onClick={() => setViewMode("tile")} className={`p-1.5 rounded-full transition-colors ${viewMode === "tile" ? "bg-white text-terracotta shadow-sm" : "text-charcoal-light hover:text-charcoal"}`} title="Tile view"><LayoutGrid className="w-3.5 h-3.5" /></button>
+            <button onClick={() => setViewMode("list")} className={`p-1.5 rounded-full transition-colors ${viewMode === "list" ? "bg-white text-terracotta shadow-sm" : "text-charcoal-light hover:text-charcoal"}`} title="List view"><List className="w-3.5 h-3.5" /></button>
+          </div>
+        </div>
         <button onClick={startNew} className="pill-primary-sm gap-2">
           <Plus className="w-4 h-4" />
           Add Category
@@ -947,29 +1088,99 @@ function SkillsTab() {
         </DialogContent>
       </Dialog>
 
-      <div className="space-y-3">
-        {skills?.map((skill) => (
-          <div key={skill.id} className="warm-card p-4 flex items-center gap-4">
-            <GripVertical className="w-4 h-4 text-warm-300 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <span className="text-xs px-2 py-0.5 rounded-full bg-terracotta/10 text-terracotta font-medium">{skill.icon}</span>
-                <h4 className="text-base text-charcoal truncate" style={{ fontFamily: "var(--font-display)" }}>{skill.title}</h4>
+      {skills && skills.length > 0 ? (
+        <DndContext
+          sensors={skillSensors}
+          collisionDetection={closestCenter}
+          onDragStart={(event) => setActiveDragId(event.active.id as number)}
+          onDragEnd={(event) => { setActiveDragId(null); handleDragEnd(event); }}
+          onDragCancel={() => setActiveDragId(null)}
+        >
+          <SortableContext items={skills.map((s) => s.id)} strategy={viewMode === "tile" ? rectSortingStrategy : verticalListSortingStrategy}>
+            {viewMode === "tile" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {skills.map((skill) => (
+                  <SortableSkillTile key={skill.id} skill={skill} onEdit={startEdit} onDelete={(id: number) => { if (confirm("Delete?")) deleteSkill.mutate({ id }); }} />
+                ))}
               </div>
-              <p className="text-sm text-charcoal-light truncate mt-0.5" style={{ fontFamily: "var(--font-body)" }}>{skill.skills || "No skills listed"}</p>
+            ) : (
+              <div className="space-y-2">
+                {skills.map((skill) => (
+                  <SortableSkillListItem key={skill.id} skill={skill} onEdit={startEdit} onDelete={(id: number) => { if (confirm("Delete?")) deleteSkill.mutate({ id }); }} />
+                ))}
+              </div>
+            )}
+          </SortableContext>
+          <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>
+            {activeDragSkill ? (
+              <div className="warm-card p-3 flex items-center gap-3 shadow-xl ring-2 ring-terracotta/30">
+                <GripVertical className="w-4 h-4 text-warm-400 shrink-0" />
+                <span className="text-xs px-2 py-0.5 rounded-full bg-terracotta/10 text-terracotta font-medium">{activeDragSkill.icon}</span>
+                <span className="text-sm font-medium text-charcoal truncate" style={{ fontFamily: "var(--font-display)" }}>{activeDragSkill.title}</span>
+              </div>
+            ) : null}
+          </DragOverlay>
+          {reorderSkills.isPending && (
+            <div className="flex items-center justify-center gap-2 py-2 text-sm text-charcoal-light">
+              <Loader2 className="w-4 h-4 animate-spin" /> Saving order...
             </div>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <button onClick={() => startEdit(skill)} className="p-2 rounded-full hover:bg-warm-100 transition-colors"><Pencil className="w-4 h-4 text-charcoal-light" /></button>
-              <button onClick={() => { if (confirm("Delete?")) deleteSkill.mutate({ id: skill.id }); }} className="p-2 rounded-full hover:bg-red-50 transition-colors"><Trash2 className="w-4 h-4 text-red-400" /></button>
-            </div>
-          </div>
-        ))}
-        {(!skills || skills.length === 0) && (
-          <div className="text-center py-12 text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
-            <Wrench className="w-10 h-10 mx-auto mb-3 text-warm-300" />
-            <p>No skill categories yet. Add your first one above.</p>
-          </div>
-        )}
+          )}
+        </DndContext>
+      ) : (
+        <div className="text-center py-12 text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
+          <Wrench className="w-10 h-10 mx-auto mb-3 text-warm-300" />
+          <p>No skill categories yet. Add your first one above.</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Sortable skill tile card
+function SortableSkillTile({ skill, onEdit, onDelete }: { skill: any; onEdit: (s: any) => void; onDelete: (id: number) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: skill.id });
+  const style = { transform: CSS.Transform.toString(transform), transition: transition || "transform 200ms ease", opacity: isDragging ? 0.3 : 1 };
+  const skillList = skill.skills ? skill.skills.split(",").map((s: string) => s.trim()).filter(Boolean) : [];
+  return (
+    <div ref={setNodeRef} style={style} className={`warm-card p-5 space-y-3 ${isDragging ? "ring-2 ring-terracotta/30" : ""}`}>
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-xs px-2 py-0.5 rounded-full bg-terracotta/10 text-terracotta font-medium">{skill.icon}</span>
+          <h4 className="text-base text-charcoal truncate" style={{ fontFamily: "var(--font-display)" }}>{skill.title}</h4>
+        </div>
+        <button {...attributes} {...listeners} className="p-1 rounded-md text-warm-400 hover:text-charcoal cursor-grab active:cursor-grabbing touch-none shrink-0"><GripVertical className="w-4 h-4" /></button>
+      </div>
+      {skillList.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {skillList.slice(0, 5).map((s: string) => (
+            <span key={s} className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-warm-50 text-charcoal-light border border-warm-200/60">{s}</span>
+          ))}
+          {skillList.length > 5 && <span className="text-[10px] text-charcoal-light">+{skillList.length - 5}</span>}
+        </div>
+      )}
+      <div className="flex gap-2 pt-1">
+        <button onClick={() => onEdit(skill)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all flex items-center gap-1"><Pencil className="w-3 h-3" />Edit</button>
+        <button onClick={() => onDelete(skill.id)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-red-500 hover:border-red-300 transition-all flex items-center gap-1"><Trash2 className="w-3 h-3" />Delete</button>
+      </div>
+    </div>
+  );
+}
+
+// Sortable skill list item
+function SortableSkillListItem({ skill, onEdit, onDelete }: { skill: any; onEdit: (s: any) => void; onDelete: (id: number) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: skill.id });
+  const style = { transform: CSS.Transform.toString(transform), transition: transition || "transform 200ms ease", opacity: isDragging ? 0.3 : 1 };
+  return (
+    <div ref={setNodeRef} style={style} className={`warm-card p-3 flex items-center gap-3 ${isDragging ? "shadow-lg ring-2 ring-terracotta/30" : ""}`}>
+      <button {...attributes} {...listeners} className="p-1 rounded-md text-warm-400 hover:text-charcoal hover:bg-warm-100 transition-colors cursor-grab active:cursor-grabbing touch-none shrink-0"><GripVertical className="w-4 h-4" /></button>
+      <span className="text-xs px-2 py-0.5 rounded-full bg-terracotta/10 text-terracotta font-medium shrink-0">{skill.icon}</span>
+      <div className="flex-1 min-w-0">
+        <h4 className="text-sm font-medium text-charcoal truncate" style={{ fontFamily: "var(--font-display)" }}>{skill.title}</h4>
+        <p className="text-xs text-charcoal-light truncate" style={{ fontFamily: "var(--font-body)" }}>{skill.skills || "No skills listed"}</p>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <button onClick={() => onEdit(skill)} className="p-1.5 rounded-full hover:bg-warm-100 transition-colors"><Pencil className="w-3.5 h-3.5 text-charcoal-light" /></button>
+        <button onClick={() => onDelete(skill.id)} className="p-1.5 rounded-full hover:bg-red-50 transition-colors"><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>
       </div>
     </div>
   );
@@ -1252,19 +1463,33 @@ function EducationTab() {
   const [description, setDescription] = useState("");
   const [sortOrder, setSortOrder] = useState(0);
   const [logoUrl, setLogoUrl] = useState("");
+  const [viewMode, setViewMode] = useState<"tile" | "list">("list");
+  const [activeDragId, setActiveDragId] = useState<number | null>(null);
 
   const createMutation = trpc.adminEducation.create.useMutation({
-    onSuccess: () => { utils.adminEducation.list.invalidate(); toast.success("Education added!"); resetForm(); },
+    onSuccess: () => { utils.adminEducation.list.invalidate(); utils.portfolio.getAll.invalidate(); toast.success("Education added!"); resetForm(); },
     onError: (e) => toast.error(e.message),
   });
   const updateMutation = trpc.adminEducation.update.useMutation({
-    onSuccess: () => { utils.adminEducation.list.invalidate(); toast.success("Education updated!"); resetForm(); },
+    onSuccess: () => { utils.adminEducation.list.invalidate(); utils.portfolio.getAll.invalidate(); toast.success("Education updated!"); resetForm(); },
     onError: (e) => toast.error(e.message),
   });
   const deleteMutation = trpc.adminEducation.delete.useMutation({
-    onSuccess: () => { utils.adminEducation.list.invalidate(); toast.success("Education deleted!"); },
+    onSuccess: () => { utils.adminEducation.list.invalidate(); utils.portfolio.getAll.invalidate(); toast.success("Education deleted!"); },
     onError: (e) => toast.error(e.message),
   });
+  const reorderEdu = trpc.adminEducation.reorder.useMutation({
+    onSuccess: () => { utils.adminEducation.list.invalidate(); utils.portfolio.getAll.invalidate(); },
+    onError: (e) => toast.error(e.message),
+  });
+
+  const eduSensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
+
+  const activeDragEdu = activeDragId ? educationList?.find((e: any) => e.id === activeDragId) ?? null : null;
 
   function resetForm() {
     setShowModal(false);
@@ -1305,6 +1530,17 @@ function EducationTab() {
     }
   }
 
+  const handleDragEnd = useCallback((event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || !educationList) return;
+    const oldIndex = educationList.findIndex((e: any) => e.id === active.id);
+    const newIndex = educationList.findIndex((e: any) => e.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const reordered = arrayMove(educationList, oldIndex, newIndex);
+    const items = reordered.map((e: any, i: number) => ({ id: e.id, sortOrder: i + 1 }));
+    reorderEdu.mutate({ items });
+  }, [educationList, reorderEdu]);
+
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-terracotta" /></div>;
@@ -1312,38 +1548,58 @@ function EducationTab() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl text-charcoal" style={{ fontFamily: "var(--font-display)" }}>Education</h2>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
+            {educationList?.length || 0} entr{(educationList?.length || 0) !== 1 ? "ies" : "y"}
+          </p>
+          <div className="flex items-center bg-warm-100 rounded-full p-0.5">
+            <button onClick={() => setViewMode("tile")} className={`p-1.5 rounded-full transition-colors ${viewMode === "tile" ? "bg-white text-terracotta shadow-sm" : "text-charcoal-light hover:text-charcoal"}`} title="Tile view"><LayoutGrid className="w-3.5 h-3.5" /></button>
+            <button onClick={() => setViewMode("list")} className={`p-1.5 rounded-full transition-colors ${viewMode === "list" ? "bg-white text-terracotta shadow-sm" : "text-charcoal-light hover:text-charcoal"}`} title="List view"><List className="w-3.5 h-3.5" /></button>
+          </div>
+        </div>
         <button onClick={openCreate} className="pill-primary-sm flex items-center gap-2"><Plus className="w-4 h-4" />Add Education</button>
       </div>
 
-      {/* Education Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {educationList?.map((edu: any) => (
-          <div key={edu.id} className="warm-card p-5 space-y-3">
-            <div className="flex items-start justify-between">
-              <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-charcoal truncate" style={{ fontFamily: "var(--font-display)" }}>{edu.degree}</h3>
-                <p className="text-sm text-terracotta font-medium truncate" style={{ fontFamily: "var(--font-body)" }}>{edu.institution}</p>
-                {edu.fieldOfStudy && <p className="text-xs text-charcoal-light mt-0.5" style={{ fontFamily: "var(--font-body)" }}>{edu.fieldOfStudy}</p>}
+      {educationList && educationList.length > 0 ? (
+        <DndContext
+          sensors={eduSensors}
+          collisionDetection={closestCenter}
+          onDragStart={(event) => setActiveDragId(event.active.id as number)}
+          onDragEnd={(event) => { setActiveDragId(null); handleDragEnd(event); }}
+          onDragCancel={() => setActiveDragId(null)}
+        >
+          <SortableContext items={educationList.map((e: any) => e.id)} strategy={viewMode === "tile" ? rectSortingStrategy : verticalListSortingStrategy}>
+            {viewMode === "tile" ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {educationList.map((edu: any) => (
+                  <SortableEduTile key={edu.id} edu={edu} onEdit={openEdit} onDelete={(id: number) => { if (confirm("Delete this education entry?")) deleteMutation.mutate({ id }); }} />
+                ))}
               </div>
-              <span className="text-xs text-charcoal-light whitespace-nowrap px-2 py-1 rounded-full bg-warm-100 border border-warm-200/60 ml-2">
-                {edu.startYear} — {edu.endYear || "Present"}
-              </span>
+            ) : (
+              <div className="space-y-2">
+                {educationList.map((edu: any) => (
+                  <SortableEduListItem key={edu.id} edu={edu} onEdit={openEdit} onDelete={(id: number) => { if (confirm("Delete this education entry?")) deleteMutation.mutate({ id }); }} />
+                ))}
+              </div>
+            )}
+          </SortableContext>
+          <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>
+            {activeDragEdu ? (
+              <div className="warm-card p-3 flex items-center gap-3 shadow-xl ring-2 ring-terracotta/30">
+                <GripVertical className="w-4 h-4 text-warm-400 shrink-0" />
+                <span className="text-sm font-medium text-charcoal truncate" style={{ fontFamily: "var(--font-display)" }}>
+                  {(activeDragEdu as any).degree} — {(activeDragEdu as any).institution}
+                </span>
+              </div>
+            ) : null}
+          </DragOverlay>
+          {reorderEdu.isPending && (
+            <div className="flex items-center justify-center gap-2 py-2 text-sm text-charcoal-light">
+              <Loader2 className="w-4 h-4 animate-spin" /> Saving order...
             </div>
-            {edu.description && <p className="text-sm text-charcoal-light line-clamp-2" style={{ fontFamily: "var(--font-body)" }}>{edu.description}</p>}
-            <div className="flex gap-2 pt-1">
-              <button onClick={() => openEdit(edu)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all flex items-center gap-1">
-                <Pencil className="w-3 h-3" />Edit
-              </button>
-              <button onClick={() => { if (confirm("Delete this education entry?")) deleteMutation.mutate({ id: edu.id }); }} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-red-500 hover:border-red-300 transition-all flex items-center gap-1">
-                <Trash2 className="w-3 h-3" />Delete
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {(!educationList || educationList.length === 0) && (
+          )}
+        </DndContext>
+      ) : (
         <div className="text-center py-12 text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
           <GraduationCap className="w-12 h-12 mx-auto mb-3 opacity-30" />
           <p>No education entries yet. Click "Add Education" to get started.</p>
@@ -1387,6 +1643,58 @@ function EducationTab() {
           </DialogContent>
         </Dialog>
       )}
+    </div>
+  );
+}
+
+// Sortable education tile card
+function SortableEduTile({ edu, onEdit, onDelete }: { edu: any; onEdit: (e: any) => void; onDelete: (id: number) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: edu.id });
+  const style = { transform: CSS.Transform.toString(transform), transition: transition || "transform 200ms ease", opacity: isDragging ? 0.3 : 1 };
+  return (
+    <div ref={setNodeRef} style={style} className={`warm-card p-5 space-y-3 ${isDragging ? "ring-2 ring-terracotta/30" : ""}`}>
+      <div className="flex items-start justify-between">
+        <div className="flex-1 min-w-0">
+          <h3 className="font-semibold text-charcoal truncate" style={{ fontFamily: "var(--font-display)" }}>{edu.degree}</h3>
+          <p className="text-sm text-terracotta font-medium truncate" style={{ fontFamily: "var(--font-body)" }}>{edu.institution}</p>
+          {edu.fieldOfStudy && <p className="text-xs text-charcoal-light mt-0.5" style={{ fontFamily: "var(--font-body)" }}>{edu.fieldOfStudy}</p>}
+        </div>
+        <div className="flex items-center gap-1 ml-2 shrink-0">
+          <span className="text-xs text-charcoal-light whitespace-nowrap px-2 py-1 rounded-full bg-warm-100 border border-warm-200/60">
+            {edu.startYear} — {edu.endYear || "Present"}
+          </span>
+          <button {...attributes} {...listeners} className="p-1 rounded-md text-warm-400 hover:text-charcoal cursor-grab active:cursor-grabbing touch-none"><GripVertical className="w-4 h-4" /></button>
+        </div>
+      </div>
+      {edu.description && <p className="text-sm text-charcoal-light line-clamp-2" style={{ fontFamily: "var(--font-body)" }}>{edu.description}</p>}
+      <div className="flex gap-2 pt-1">
+        <button onClick={() => onEdit(edu)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-terracotta hover:border-terracotta-light transition-all flex items-center gap-1"><Pencil className="w-3 h-3" />Edit</button>
+        <button onClick={() => onDelete(edu.id)} className="text-xs px-3 py-1.5 rounded-full border border-warm-200 text-charcoal-light hover:text-red-500 hover:border-red-300 transition-all flex items-center gap-1"><Trash2 className="w-3 h-3" />Delete</button>
+      </div>
+    </div>
+  );
+}
+
+// Sortable education list item
+function SortableEduListItem({ edu, onEdit, onDelete }: { edu: any; onEdit: (e: any) => void; onDelete: (id: number) => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: edu.id });
+  const style = { transform: CSS.Transform.toString(transform), transition: transition || "transform 200ms ease", opacity: isDragging ? 0.3 : 1 };
+  return (
+    <div ref={setNodeRef} style={style} className={`warm-card p-3 flex items-center gap-3 ${isDragging ? "shadow-lg ring-2 ring-terracotta/30" : ""}`}>
+      <button {...attributes} {...listeners} className="p-1 rounded-md text-warm-400 hover:text-charcoal hover:bg-warm-100 transition-colors cursor-grab active:cursor-grabbing touch-none shrink-0"><GripVertical className="w-4 h-4" /></button>
+      {edu.logoUrl ? (
+        <img src={edu.logoUrl} alt="" className="w-10 h-10 rounded-md object-cover shrink-0" />
+      ) : (
+        <div className="w-10 h-10 rounded-md bg-warm-100 flex items-center justify-center shrink-0"><GraduationCap className="w-5 h-5 text-warm-300" /></div>
+      )}
+      <div className="flex-1 min-w-0">
+        <h4 className="text-sm font-medium text-charcoal truncate" style={{ fontFamily: "var(--font-display)" }}>{edu.degree}</h4>
+        <p className="text-xs text-terracotta truncate" style={{ fontFamily: "var(--font-body)" }}>{edu.institution} &middot; {edu.startYear}—{edu.endYear || "Present"}</p>
+      </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <button onClick={() => onEdit(edu)} className="p-1.5 rounded-full hover:bg-warm-100 transition-colors"><Pencil className="w-3.5 h-3.5 text-charcoal-light" /></button>
+        <button onClick={() => onDelete(edu.id)} className="p-1.5 rounded-full hover:bg-red-50 transition-colors"><Trash2 className="w-3.5 h-3.5 text-red-400" /></button>
+      </div>
     </div>
   );
 }

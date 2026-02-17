@@ -272,6 +272,21 @@ export const appRouter = router({
         await db.deleteExperience(input.id);
         return { success: true };
       }),
+    reorder: adminProcedure
+      .input(
+        z.object({
+          items: z.array(
+            z.object({
+              id: z.number().int().positive(),
+              sortOrder: z.number().min(0).max(9999),
+            })
+          ).min(1).max(100),
+        })
+      )
+      .mutation(async ({ input }) => {
+        await db.reorderExperiences(input.items);
+        return { success: true };
+      }),
   }),
 
   // ==========================================
@@ -357,6 +372,21 @@ export const appRouter = router({
         await db.deleteEducation(input.id);
         return { success: true };
       }),
+    reorder: adminProcedure
+      .input(
+        z.object({
+          items: z.array(
+            z.object({
+              id: z.number().int().positive(),
+              sortOrder: z.number().min(0).max(9999),
+            })
+          ).min(1).max(100),
+        })
+      )
+      .mutation(async ({ input }) => {
+        await db.reorderEducation(input.items);
+        return { success: true };
+      }),
   }),
 
   // ==========================================
@@ -425,6 +455,21 @@ export const appRouter = router({
       .input(z.object({ id: z.number().int().positive() }))
       .mutation(async ({ input }) => {
         await db.deleteSkillCategory(input.id);
+        return { success: true };
+      }),
+    reorder: adminProcedure
+      .input(
+        z.object({
+          items: z.array(
+            z.object({
+              id: z.number().int().positive(),
+              sortOrder: z.number().min(0).max(9999),
+            })
+          ).min(1).max(100),
+        })
+      )
+      .mutation(async ({ input }) => {
+        await db.reorderSkills(input.items);
         return { success: true };
       }),
   }),

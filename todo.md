@@ -305,3 +305,9 @@
 - [x] Implement list view for projects (compact, easy to reorder)
 - [x] Improve tile view drag-and-drop smoothness (better sensors, animations, overlays)
 - [x] Push to GitHub
+
+## Phase 39: List/Tile view toggle + smoother DnD for Experience, Skills, Education
+- [x] Experience tab: add list/tile view toggle + DragOverlay + TouchSensor
+- [x] Skills tab: add list/tile view toggle + DragOverlay + TouchSensor
+- [x] Education tab: add list/tile view toggle + DragOverlay + TouchSensor
+- [ ] Push to GitHub

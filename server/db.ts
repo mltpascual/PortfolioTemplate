@@ -905,3 +905,42 @@ export async function getFullPortfolio() {
     education: educationData,
   };
 }
+
+export async function reorderExperiences(items: Array<{ id: number; sortOrder: number }>) {
+  const sb = getSupabaseAdmin();
+  const promises = items.map((item) =>
+    sb.from("experiences").update({ sort_order: item.sortOrder }).eq("id", item.id)
+  );
+  const results = await Promise.all(promises);
+  const failed = results.find((r) => r.error);
+  if (failed?.error) {
+    console.error('[DB] Failed to reorder experiences:', failed.error.message);
+    throw new Error('Failed to reorder experiences');
+  }
+}
+
+export async function reorderSkills(items: Array<{ id: number; sortOrder: number }>) {
+  const sb = getSupabaseAdmin();
+  const promises = items.map((item) =>
+    sb.from("skills").update({ sort_order: item.sortOrder }).eq("id", item.id)
+  );
+  const results = await Promise.all(promises);
+  const failed = results.find((r) => r.error);
+  if (failed?.error) {
+    console.error('[DB] Failed to reorder skills:', failed.error.message);
+    throw new Error('Failed to reorder skills');
+  }
+}
+
+export async function reorderEducation(items: Array<{ id: number; sortOrder: number }>) {
+  const sb = getSupabaseAdmin();
+  const promises = items.map((item) =>
+    sb.from("education").update({ sort_order: item.sortOrder }).eq("id", item.id)
+  );
+  const results = await Promise.all(promises);
+  const failed = results.find((r) => r.error);
+  if (failed?.error) {
+    console.error('[DB] Failed to reorder education:', failed.error.message);
+    throw new Error('Failed to reorder education');
+  }
+}
