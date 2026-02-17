@@ -299,3 +299,9 @@
 - [x] Run dev-orchestrator → generate DEVELOPMENT_GUIDELINES.md
 - [x] Run docs-orchestrator → generate conductor/, DESIGN.md, C4-Documentation/, README.md
 - [x] Push to GitHub
+
+## Phase 38: Admin Projects - List/Tile view toggle + smoother drag-and-drop
+- [x] Add list/tile view toggle button in admin Projects tab
+- [x] Implement list view for projects (compact, easy to reorder)
+- [x] Improve tile view drag-and-drop smoothness (better sensors, animations, overlays)
+- [ ] Push to GitHub

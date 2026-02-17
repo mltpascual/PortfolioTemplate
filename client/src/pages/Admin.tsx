@@ -36,6 +36,7 @@ import {
   ChevronDown,
   GraduationCap,
   LayoutGrid,
+  List,
   ArrowUp,
   ArrowDown,
   Type,
@@ -45,6 +46,8 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
+  TouchSensor,
+  DragOverlay,
   useSensor,
   useSensors,
   type DragEndEvent,
@@ -261,6 +264,8 @@ function ProjectsTab() {
     onError: (err) => toast.error(err.message),
   });
   const [bulkTagsInput, setBulkTagsInput] = useState("");
+  const [projectViewMode, setProjectViewMode] = useState<"tile" | "list">("tile");
+  const [activeDragId, setActiveDragId] = useState<number | null>(null);
 
   const [editing, setEditing] = useState<number | "new" | null>(null);
   const [form, setForm] = useState({
@@ -275,11 +280,14 @@ function ProjectsTab() {
     sortOrder: 0,
   });
 
-  // DnD sensors
+  // DnD sensors — lower distance threshold + touch support for smoother dragging
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 150, tolerance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
+
+  const activeDragProject = activeDragId ? projects?.find((p) => p.id === activeDragId) ?? null : null;
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -331,9 +339,36 @@ function ProjectsTab() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
-          {projects?.length || 0} project{(projects?.length || 0) !== 1 ? "s" : ""}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-sm text-charcoal-light" style={{ fontFamily: "var(--font-body)" }}>
+            {projects?.length || 0} project{(projects?.length || 0) !== 1 ? "s" : ""}
+          </p>
+          {/* View mode toggle */}
+          <div className="flex items-center bg-warm-100 rounded-full p-0.5">
+            <button
+              onClick={() => setProjectViewMode("tile")}
+              className={`p-1.5 rounded-full transition-colors ${
+                projectViewMode === "tile"
+                  ? "bg-white text-terracotta shadow-sm"
+                  : "text-charcoal-light hover:text-charcoal"
+              }`}
+              title="Tile view"
+            >
+              <LayoutGrid className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setProjectViewMode("list")}
+              className={`p-1.5 rounded-full transition-colors ${
+                projectViewMode === "list"
+                  ? "bg-white text-terracotta shadow-sm"
+                  : "text-charcoal-light hover:text-charcoal"
+              }`}
+              title="List view"
+            >
+              <List className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
         <button onClick={startNew} className="pill-primary-sm gap-2">
           <Plus className="w-4 h-4" />
           Add Project
@@ -482,23 +517,77 @@ function ProjectsTab() {
         <DndContext
           sensors={sensors}
           collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
+          onDragStart={(event) => setActiveDragId(event.active.id as number)}
+          onDragEnd={(event) => { setActiveDragId(null); handleDragEnd(event); }}
+          onDragCancel={() => setActiveDragId(null)}
         >
           <SortableContext
             items={projects.map((p) => p.id)}
-            strategy={rectSortingStrategy}
+            strategy={projectViewMode === "tile" ? rectSortingStrategy : verticalListSortingStrategy}
           >
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {projects.map((project) => (
-                <SortableProjectItem
-                  key={project.id}
-                  project={project}
-                  onEdit={startEdit}
-                  onDelete={(id) => deleteProject.mutate({ id })}
-                />
-              ))}
-            </div>
+            {projectViewMode === "tile" ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {projects.map((project) => (
+                  <SortableProjectItem
+                    key={project.id}
+                    project={project}
+                    onEdit={startEdit}
+                    onDelete={(id) => deleteProject.mutate({ id })}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {projects.map((project) => (
+                  <SortableProjectListItem
+                    key={project.id}
+                    project={project}
+                    onEdit={startEdit}
+                    onDelete={(id) => deleteProject.mutate({ id })}
+                  />
+                ))}
+              </div>
+            )}
           </SortableContext>
+
+          {/* Drag overlay for smoother visual feedback */}
+          <DragOverlay dropAnimation={{ duration: 200, easing: "ease" }}>
+            {activeDragProject ? (
+              projectViewMode === "tile" ? (
+                <div className="warm-card overflow-hidden shadow-xl ring-2 ring-terracotta/30 rotate-[2deg] scale-105">
+                  <div className="relative w-full aspect-video overflow-hidden bg-warm-50">
+                    {activeDragProject.imageUrl ? (
+                      <img src={activeDragProject.imageUrl} alt={activeDragProject.title} className="w-full h-full object-cover object-top" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <FolderOpen className="w-10 h-10 text-warm-300" />
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-3 sm:p-4">
+                    <h4 className="text-sm sm:text-base text-charcoal truncate" style={{ fontFamily: "var(--font-display)" }}>
+                      {activeDragProject.title}
+                    </h4>
+                  </div>
+                </div>
+              ) : (
+                <div className="warm-card p-3 flex items-center gap-3 shadow-xl ring-2 ring-terracotta/30">
+                  <GripVertical className="w-4 h-4 text-warm-400 shrink-0" />
+                  {activeDragProject.imageUrl ? (
+                    <img src={activeDragProject.imageUrl} alt="" className="w-10 h-10 rounded-md object-cover object-top shrink-0" />
+                  ) : (
+                    <div className="w-10 h-10 rounded-md bg-warm-100 flex items-center justify-center shrink-0">
+                      <FolderOpen className="w-5 h-5 text-warm-300" />
+                    </div>
+                  )}
+                  <span className="text-sm font-medium text-charcoal truncate" style={{ fontFamily: "var(--font-display)" }}>
+                    {activeDragProject.title}
+                  </span>
+                </div>
+              )
+            ) : null}
+          </DragOverlay>
+
           {reorderProjects.isPending && (
             <div className="flex items-center justify-center gap-2 py-2 text-sm text-charcoal-light">
               <Loader2 className="w-4 h-4 animate-spin" />
@@ -512,6 +601,133 @@ function ProjectsTab() {
           <p>No projects yet. Add your first project above.</p>
         </div>
       )}
+    </div>
+  );
+}
+
+// ============================================================
+// SORTABLE PROJECT LIST ITEM (compact list view)
+// ============================================================
+function SortableProjectListItem({ project, onEdit, onDelete }: {
+  project: {
+    id: number;
+    title: string;
+    description: string | null;
+    imageUrl?: string | null;
+    liveUrl?: string | null;
+    githubUrl?: string | null;
+    featured: number;
+    tileSize?: string;
+    tags?: string | null;
+    sortOrder: number;
+  };
+  onEdit: (project: any) => void;
+  onDelete: (id: number) => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: project.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 50 : ("auto" as any),
+  };
+
+  const tags = project.tags
+    ? project.tags.split(",").map((t: string) => t.trim()).filter(Boolean)
+    : [];
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`warm-card p-3 flex items-center gap-3 group transition-shadow ${
+        isDragging ? "shadow-lg ring-2 ring-terracotta/30" : ""
+      }`}
+    >
+      {/* Drag handle */}
+      <button
+        {...attributes}
+        {...listeners}
+        className="p-1 rounded-md text-warm-400 hover:text-charcoal hover:bg-warm-100 transition-colors cursor-grab active:cursor-grabbing touch-none shrink-0"
+        aria-label="Drag to reorder"
+      >
+        <GripVertical className="w-4 h-4" />
+      </button>
+
+      {/* Thumbnail */}
+      {project.imageUrl ? (
+        <img
+          src={project.imageUrl}
+          alt={project.title}
+          className="w-12 h-12 rounded-md object-cover object-top shrink-0"
+          loading="lazy"
+        />
+      ) : (
+        <div className="w-12 h-12 rounded-md bg-warm-100 flex items-center justify-center shrink-0">
+          <FolderOpen className="w-5 h-5 text-warm-300" />
+        </div>
+      )}
+
+      {/* Title + meta */}
+      <div className="flex-1 min-w-0">
+        <h4
+          className="text-sm font-medium text-charcoal truncate"
+          style={{ fontFamily: "var(--font-display)" }}
+        >
+          {project.title}
+        </h4>
+        <div className="flex items-center gap-2 mt-0.5">
+          {project.featured === 1 && (
+            <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-terracotta/10 text-terracotta font-semibold">
+              Featured
+            </span>
+          )}
+          <span className="text-[9px] px-1.5 py-0.5 rounded-full bg-warm-100 text-charcoal-light font-medium capitalize">
+            {project.tileSize || "medium"}
+          </span>
+          {tags.slice(0, 3).map((tag: string) => (
+            <span
+              key={tag}
+              className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-warm-50 text-charcoal-light border border-warm-200/60 hidden sm:inline-block"
+            >
+              {tag}
+            </span>
+          ))}
+          {tags.length > 3 && (
+            <span className="text-[9px] font-medium text-charcoal-light hidden sm:inline-block">
+              +{tags.length - 3}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-1 shrink-0">
+        <button
+          onClick={() => onEdit(project)}
+          className="p-1.5 rounded-full hover:bg-warm-100 transition-colors"
+          title="Edit"
+        >
+          <Pencil className="w-3.5 h-3.5 text-charcoal-light" />
+        </button>
+        <button
+          onClick={() => {
+            if (confirm("Delete this project?")) onDelete(project.id);
+          }}
+          className="p-1.5 rounded-full hover:bg-red-50 transition-colors"
+          title="Delete"
+        >
+          <Trash2 className="w-3.5 h-3.5 text-red-400" />
+        </button>
+      </div>
     </div>
   );
 }
