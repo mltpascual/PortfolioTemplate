@@ -922,7 +922,7 @@ export async function reorderExperiences(items: Array<{ id: number; sortOrder: n
 export async function reorderSkills(items: Array<{ id: number; sortOrder: number }>) {
   const sb = getSupabaseAdmin();
   const promises = items.map((item) =>
-    sb.from("skills").update({ sort_order: item.sortOrder }).eq("id", item.id)
+    sb.from("skill_categories").update({ sort_order: item.sortOrder }).eq("id", item.id)
   );
   const results = await Promise.all(promises);
   const failed = results.find((r) => r.error);

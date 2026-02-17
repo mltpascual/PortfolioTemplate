@@ -151,6 +151,10 @@ The project uses Tailwind's default spacing scale (4px base unit):
 
 **Admin Cards**: shadcn/ui Card component with standard `bg-card` background, `rounded-lg` corners, `border-border` borders.
 
+**Admin List/Tile Toggle**: All admin tabs (Projects, Experience, Skills, Education) support switching between a tile grid view and a compact list view. The toggle uses `LayoutGrid` / `List` icons from Lucide. List view shows a thumbnail, title, metadata, and action buttons in a single row for efficient reordering.
+
+**Duplicate Button**: Each item in all admin tabs has a copy icon button that creates a clone with "(Copy)" appended to the title.
+
 ### Inputs & Forms
 
 - Border: `border-warm-200` (light mode), focus ring: `ring-terracotta`
@@ -223,6 +227,10 @@ Every section uses IntersectionObserver-driven entrance animations:
 
 The moon/sun icon button uses a smooth rotation and scale animation on toggle.
 
+### Drag-and-Drop
+
+Admin panel reordering uses `@dnd-kit` with `DragOverlay` for a smooth visual experience. The dragged item lifts with `rotate(2deg)` and `scale(1.02)` while the original position shows reduced opacity. `TouchSensor` is enabled for mobile with a 5px activation distance.
+
 ### Motion Philosophy
 
 Motion is purposeful and sparse. Each section gets one entrance animation. Interactive elements get subtle hover feedback. No decorative motion, no parallax, no continuous animations. Respects `prefers-reduced-motion` by disabling animations.
@@ -243,6 +251,8 @@ Motion is purposeful and sparse. Each section gets one entrance animation. Inter
 | Hero decorative | `w-10 h-10` | Feature highlights |
 
 **Image Handling**: Project images use `object-cover object-top` to show the header/top portion of screenshots. Aspect ratio is `aspect-video` (16:9) for project cards.
+
+**Logo & Favicon**: Custom MP monogram (terracotta circle with white interlocking M and P letters). Displayed at `w-8 h-8` in the navbar alongside the site name. Favicon generated at 16, 32, 48, 64, 128, 192, and 512px sizes plus ICO and apple-touch-icon.
 
 ---
 

@@ -335,3 +335,13 @@
 - [x] Generate all favicon sizes from user-provided image
 - [x] Replace favicon files in client/public
 - [x] Push to GitHub
+
+## Phase 44: Docs orchestrator, clean MD files, find/fix bugs
+- [x] Clean unused MD files (removed SECURITY_AUDIT.md, scripts/migration-notes.md)
+- [x] Docs Phase 1: Update conductor/ project context
+- [x] Docs Phase 2: Update DESIGN.md
+- [x] Docs Phase 3: Update C4-Documentation/
+- [x] Docs Phase 4: Update README.md
+- [x] Find bugs (find-bugs + e2e testing patterns)
+- [x] Fix bugs found (reorderSkills used wrong table 'skills' → 'skill_categories')
+- [ ] Push to GitHub

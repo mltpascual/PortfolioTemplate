@@ -39,6 +39,9 @@ A full-stack portfolio application where every piece of content — profile info
 | Resume Download | Implemented | PDF upload and download link |
 | Bulk Operations | Implemented | Bulk update project tags, tile sizes |
 | Custom Section Titles | Implemented | Rename any section header from admin panel |
+| List/Tile View Toggle | Implemented | Switch between grid and list views in all admin tabs |
+| Duplicate Items | Implemented | One-click duplication for projects, experience, skills, education |
+| Custom Logo & Favicon | Implemented | User-provided MP monogram as navbar logo and browser favicon |
 
 ## Success Metrics
 
@@ -55,4 +58,6 @@ A full-stack portfolio application where every piece of content — profile info
 | Phase 2 | Admin panel with full CRUD for all sections | Complete |
 | Phase 3 | Theme customization (fonts, colors, layout, dark mode) | Complete |
 | Phase 4 | Advanced features (analytics, bulk operations, custom titles) | Complete |
+| Phase 5 | Admin UX improvements (list/tile toggle, duplicate, drag-and-drop) | Complete |
+| Phase 6 | Branding (custom logo, favicon, documentation suite) | Complete |
 | Future | Blog section, testimonials, project filtering, i18n | Planned |

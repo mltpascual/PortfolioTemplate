@@ -8,11 +8,14 @@ A reusable, fully dynamic software engineer portfolio with a full-stack architec
 - **Theme Customization** — Change fonts, accent color, section visibility, section titles, and layout from the admin panel
 - **Dark Mode** — Toggle between light and dark themes with localStorage persistence
 - **Scroll Animations** — IntersectionObserver-driven fade-in/slide-up on all sections
-- **Drag-and-Drop Reordering** — Reorder projects, skills, and experiences with @dnd-kit
+- **Drag-and-Drop Reordering** — Smooth reorder with DragOverlay in all admin tabs (Projects, Experience, Skills, Education)
+- **List/Tile View Toggle** — Switch between grid and compact list views in all admin tabs
+- **One-Click Duplicate** — Clone any project, experience, skill, or education entry instantly
 - **Project Analytics** — Track clicks on live demo and GitHub links
 - **Responsive Design** — Mobile-first with hamburger nav, adaptive grids, and touch-friendly interactions
 - **Warm Editorial Design** — DM Serif Display + DM Sans typography, terracotta accents, cream backgrounds
 - **Bulk Operations** — Update all project tags or tile sizes at once
+- **Custom Logo & Favicon** — User-provided MP monogram with multi-size favicon generation
 - **Contact Form** — Email-based contact with owner notification
 - **Resume Upload** — PDF upload and download link
 - **Image Upload** — S3-backed image storage for project screenshots and avatars
@@ -344,10 +347,10 @@ The admin panel at `/admin` provides a tabbed interface for managing all content
 | Tab | Features |
 |---|---|
 | **Profile** | Edit name, title, bio, tagline, social links, avatar upload, resume upload, stat counters |
-| **Projects** | Create/edit/delete projects, image upload, drag-and-drop reorder, bulk tag update, bulk tile size |
-| **Experience** | Create/edit/delete work history, tags, drag-and-drop reorder |
-| **Skills** | Create/edit/delete skill categories, icon picker, drag-and-drop reorder |
-| **Education** | Create/edit/delete education entries |
+| **Projects** | Create/edit/delete/duplicate projects, image upload, list/tile toggle, drag-and-drop reorder, bulk tag update, bulk tile size |
+| **Experience** | Create/edit/delete/duplicate work history, tags, list/tile toggle, drag-and-drop reorder |
+| **Skills** | Create/edit/delete/duplicate skill categories, icon picker, list/tile toggle, drag-and-drop reorder |
+| **Education** | Create/edit/delete/duplicate education entries, list/tile toggle, drag-and-drop reorder |
 | **Layout** | Font selection (heading + body), accent color picker, section visibility toggles, custom section titles |
 
 ---

@@ -64,7 +64,7 @@ graph TB
 | Component | File | Responsibility |
 |---|---|---|
 | **Home** | `client/src/pages/Home.tsx` | Orchestrates the public portfolio. Fetches all data via `usePortfolio`, applies theme settings via `useThemeSettings`, and renders sections based on visibility config. Passes custom titles to each section. |
-| **Admin** | `client/src/pages/Admin.tsx` | Protected admin panel with 6 tabs: Profile, Projects, Experience, Skills, Education, Layout. Each tab provides full CRUD operations. Uses `adminProcedure` for all mutations. |
+| **Admin** | `client/src/pages/Admin.tsx` | Protected admin panel with 6 tabs: Profile, Projects, Experience, Skills, Education, Layout. Each tab provides full CRUD, list/tile view toggle, drag-and-drop reorder with DragOverlay, and one-click duplicate. Uses `adminProcedure` for all mutations. |
 | **NotFound** | `client/src/pages/NotFound.tsx` | Simple 404 page with navigation back to home. |
 
 ### Section Components
@@ -149,8 +149,8 @@ graph TB
 
 | Component | File | Responsibility |
 |---|---|---|
-| **Routers** | `server/routers.ts` | All tRPC procedures organized by namespace. Handles input validation (Zod), authorization checks, and calls to db helpers. ~800 lines covering all CRUD operations. |
-| **Database Helpers** | `server/db.ts` | Supabase query functions for all content types. Dual-client pattern: anon key for public reads (RLS), service role for admin writes. ~900 lines covering profile, projects, experiences, skills, education, theme, analytics. |
+| **Routers** | `server/routers.ts` | All tRPC procedures organized by namespace. Handles input validation (Zod), authorization checks, and calls to db helpers. Covers CRUD, reorder, bulk tag update, and theme management across all content types. |
+| **Database Helpers** | `server/db.ts` | Supabase query functions for all content types. Dual-client pattern: anon key for public reads (RLS), service role for admin writes. Covers profile, projects, experiences, skills, education, theme, analytics, reorder, and bulk operations. |
 | **Storage** | `server/storage.ts` | S3 upload (`storagePut`) and presigned URL generation (`storageGet`). Handles project images, avatars, and resume PDFs. |
 
 ### Platform Services
