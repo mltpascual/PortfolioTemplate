@@ -332,6 +332,6 @@
 - [x] Push to GitHub
 
 ## Phase 43: Use user-provided MP logo as logo and favicon
-- [ ] Generate all favicon sizes from user-provided image
-- [ ] Replace favicon files in client/public
-- [ ] Push to GitHub
+- [x] Generate all favicon sizes from user-provided image
+- [x] Replace favicon files in client/public
+- [x] Push to GitHub
