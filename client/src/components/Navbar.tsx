@@ -214,6 +214,23 @@ export default function Navbar({ profile, hiddenSections = new Set() }: NavbarPr
 
         {/* Desktop Nav */}
         <div className="hidden md:flex items-center gap-1">
+          <a
+            href="#hero"
+            onClick={(e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              setActiveSection("");
+              setMobileOpen(false);
+            }}
+            className={`px-4 py-2 text-sm font-medium rounded-full transition-all duration-200 ${
+              activeSection === ""
+                ? "bg-terracotta/10 text-terracotta-dark"
+                : "text-charcoal-light hover:bg-warm-100 hover:text-terracotta-dark"
+            }`}
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            Home
+          </a>
           {navLinks.map((link) => {
             const active = isLinkActive(link.sectionId);
             return (
@@ -297,6 +314,23 @@ export default function Navbar({ profile, hiddenSections = new Set() }: NavbarPr
       {/* Mobile Nav */}
       {mobileOpen && (
         <div className="md:hidden bg-cream/95 backdrop-blur-xl border-t border-warm-200 px-4 pb-6 pt-2">
+          <a
+            href="#hero"
+            onClick={(e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+              setActiveSection("");
+              setMobileOpen(false);
+            }}
+            className={`block py-3 text-base font-medium transition-colors ${
+              activeSection === ""
+                ? "text-terracotta-dark"
+                : "text-charcoal-light hover:text-terracotta-dark"
+            }`}
+            style={{ fontFamily: "var(--font-body)" }}
+          >
+            Home
+          </a>
           {navLinks.map((link) => {
             const active = isLinkActive(link.sectionId);
             return (

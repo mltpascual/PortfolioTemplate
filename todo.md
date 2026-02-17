@@ -281,3 +281,7 @@
 - [x] Add dark mode toggle to navbar
 - [x] Add scroll animations (fade-in/slide-up) to all sections
 - [x] Push to GitHub
+
+## Phase 34: Add Home link to navbar
+- [x] Add Home nav link pointing to hero section
+- [ ] Push to GitHub
