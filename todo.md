@@ -304,4 +304,4 @@
 - [x] Add list/tile view toggle button in admin Projects tab
 - [x] Implement list view for projects (compact, easy to reorder)
 - [x] Improve tile view drag-and-drop smoothness (better sensors, animations, overlays)
-- [ ] Push to GitHub
+- [x] Push to GitHub
